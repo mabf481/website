@@ -326,7 +326,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .profile-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:0 5px 20px rgba(25,54,39,.04); }
 .profile-card-story { min-height:150px; }
 .profile-card p { margin-top:10px !important; }
-.profile-long-text { white-space:pre-line; line-height:1.85 !important; }
+.profile-long-text { white-space:pre-line; line-height:1.85 !important; text-align:justify; text-justify:inter-word; }
 .profile-highlight-grid { display:grid; grid-template-columns:1fr; gap:18px; margin-top:18px; }
 .profile-highlight-grid .profile-card { min-height:150px; }
 .profile-block { margin-top:44px; }
