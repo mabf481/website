@@ -437,7 +437,7 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
                 <img src={form.hero_image_url} alt="Preview foto utama" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
               </div>
             )}
-          </label>}
+          </label>
           <label className="wide">Deskripsi<textarea rows="4" value={form.deskripsi || ''} onChange={e => setForm({ ...form, deskripsi: e.target.value })} /></label>
           <label className="wide">Sejarah<textarea rows="6" value={form.sejarah || ''} onChange={e => setForm({ ...form, sejarah: e.target.value })} /></label>
           <label className="wide">Visi<textarea rows="4" value={form.visi || ''} onChange={e => setForm({ ...form, visi: e.target.value })} /></label>
