@@ -101,6 +101,10 @@ function StatIcon({ icon }) {
   return <Icon size={29} strokeWidth={2.2} />
 }
 
+function scrollToSection(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 function PublicSite() {
   const [data, setData] = useState({ ...fallback, profile: null, units: [], timeline: [] })
   const [loading, setLoading] = useState(true)
@@ -176,16 +180,16 @@ function PublicSite() {
             <span className="desktop-only"><Phone size={15} /> {data.settings.phone}</span>
           </div>
           <div className="socials">
-            <a href="#" aria-label="Facebook"><AtSign size={16} /></a>
-            <a href="#" aria-label="Instagram"><Camera size={16} /></a>
-            <a href="#" aria-label="YouTube"><CirclePlay size={16} /></a>
+            <button type="button" className="social-link" aria-label="Facebook"><AtSign size={16} /></button>
+            <button type="button" className="social-link" aria-label="Instagram"><Camera size={16} /></button>
+            <button type="button" className="social-link" aria-label="YouTube"><CirclePlay size={16} /></button>
           </div>
         </div>
       </header>
 
       <nav className="navbar">
         <div className="container nav-inner">
-          <a className="brand" href="#beranda" onClick={() => setMenuOpen(false)}>
+          <button type="button" className="brand" onClick={() => { scrollToSection("beranda"); setMenuOpen(false) }}>
             <img
               className="brand-logo"
               src={data.settings.logo_url || fallback.settings.logo_url}
@@ -200,11 +204,11 @@ function PublicSite() {
           </a>
 
           <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
-            <a className="active" href="#beranda" onClick={() => setMenuOpen(false)}>Beranda</a>
-            <a href="#profil" onClick={() => setMenuOpen(false)}>Profil Koperasi</a>
-            <a href="#kegiatan" onClick={() => setMenuOpen(false)}>Kegiatan</a>
-            <a href="#dokumentasi" onClick={() => setMenuOpen(false)}>Dokumentasi</a>
-            <a href="#produk" onClick={() => setMenuOpen(false)}>Produk</a>
+            <button type="button" className="active" onClick={() => { scrollToSection("beranda"); setMenuOpen(false) }}>Beranda</button>
+            <button type="button" onClick={() => { scrollToSection("profil"); setMenuOpen(false) }}>Profil Koperasi</button>
+            <button type="button" onClick={() => { scrollToSection("kegiatan"); setMenuOpen(false) }}>Kegiatan</button>
+            <button type="button" onClick={() => { scrollToSection("dokumentasi"); setMenuOpen(false) }}>Dokumentasi</button>
+            <button type="button" onClick={() => { scrollToSection("produk"); setMenuOpen(false) }}>Produk</button>
           </div>
 
           <div className="nav-actions">
@@ -238,7 +242,7 @@ function PublicSite() {
             <h1>{data.settings.hero_title}</h1>
             <p>{data.settings.hero_subtitle}</p>
             <div className="hero-actions">
-              <a className="primary-button" href="#profil">Profil Koperasi <ArrowRight size={18} /></a>
+              <button type="button" className="primary-button" onClick={() => scrollToSection("profil")}>Profil Koperasi <ArrowRight size={18} /></button>
               <button className="secondary-button"><Play size={18} fill="currentColor" /> Video Profil</button>
             </div>
           </div>
@@ -320,7 +324,7 @@ function PublicSite() {
 
         <section id="kegiatan" className="content-section section">
           <div className="container">
-            <SectionHeading icon={<CalendarDays />} title="Kegiatan Terbaru" href="#kegiatan" />
+            <SectionHeading icon={<CalendarDays />} title="Kegiatan Terbaru" target="kegiatan" />
             <div className="three-column">
               {data.activities.slice(0, 3).map((item) => (
                 <article className="activity-card" key={item.id || item.title}>
@@ -329,7 +333,7 @@ function PublicSite() {
                     <span className="date"><CalendarDays size={14} /> {formatDate(item.event_date)}</span>
                     <h3>{item.title}</h3>
                     <p>{item.excerpt}</p>
-                    <a href="#kegiatan">Selengkapnya <ArrowRight size={16} /></a>
+                    <button type="button" className="text-link" onClick={() => scrollToSection("kegiatan")}>Selengkapnya <ArrowRight size={16} /></button>
                   </div>
                 </article>
               ))}
@@ -339,7 +343,7 @@ function PublicSite() {
 
         <section id="produk" className="content-section section soft">
           <div className="container">
-            <SectionHeading icon={<Package />} title="Produk Unggulan" href="#produk" />
+            <SectionHeading icon={<Package />} title="Produk Unggulan" target="produk" />
             <div className="three-column">
               {data.products.slice(0, 3).map((item) => (
                 <article className="product-card" key={item.id || item.name}>
@@ -350,7 +354,7 @@ function PublicSite() {
                   <div className="card-body">
                     <h3>{item.name}</h3>
                     <p>{item.description}</p>
-                    <a className="outline-button" href="#produk">Lihat Produk <ArrowRight size={16} /></a>
+                    <button type="button" className="outline-button" onClick={() => scrollToSection("produk")}>Lihat Produk <ArrowRight size={16} /></button>
                   </div>
                 </article>
               ))}
@@ -360,7 +364,7 @@ function PublicSite() {
 
         <section id="dokumentasi" className="content-section section">
           <div className="container">
-            <SectionHeading icon={<Leaf />} title="Dokumentasi" href="#dokumentasi" />
+            <SectionHeading icon={<Leaf />} title="Dokumentasi" target="dokumentasi" />
             <div className="gallery-grid">
               {data.gallery.slice(0, 6).map((item) => (
                 <figure key={item.id || item.image_url}>
@@ -399,11 +403,11 @@ function PublicSite() {
   )
 }
 
-function SectionHeading({ icon, title, href }) {
+function SectionHeading({ icon, title, target }) {
   return (
     <div className="section-heading">
       <h2><span>{icon}</span>{title}</h2>
-      <a href={href}>Lihat Semua <ArrowRight size={16} /></a>
+      <button type="button" className="section-link" onClick={() => scrollToSection(target)}>Lihat Semua <ArrowRight size={16} /></button>
     </div>
   )
 }
