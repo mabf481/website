@@ -21,6 +21,7 @@ import {
   Youtube,
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import Dashboard from './Dashboard'
 
 const fallback = {
   settings: {
@@ -99,7 +100,7 @@ function StatIcon({ icon }) {
   return <Icon size={29} strokeWidth={2.2} />
 }
 
-export default function App() {
+function PublicSite() {
   const [data, setData] = useState(fallback)
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -365,4 +366,17 @@ function SectionHeading({ icon, title, href }) {
       <a href={href}>Lihat Semua <ArrowRight size={16} /></a>
     </div>
   )
+}
+
+
+export default function App() {
+  const [hash, setHash] = useState(window.location.hash || '#beranda')
+
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash || '#beranda')
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  return hash === '#dashboard' ? <Dashboard /> : <PublicSite />
 }
