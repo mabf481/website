@@ -476,7 +476,7 @@ function PeriodPublicSection({ title, rows, roles }) {
       {period && <div className="period-public-label">Periode {period}</div>}
       <div className="three-column">
         {roles.map((role) => {
-          const row = activeRows.find((item) => item.jabatan === role || item.divisi === role)
+          const row = activeRows.find((item) => item.jabatan === role || item.divisi === role || (role === 'Ketua Pengawas' && item.jabatan === 'Ketua'))
           if (!row) return null
           return (
             <article className="profile-card period-public-card" key={role}>
