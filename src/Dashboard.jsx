@@ -97,7 +97,8 @@ export default function Dashboard() {
 
   async function signOut() {
     await supabase.auth.signOut()
-    window.location.hash = ''
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    window.location.reload()
   }
 
   if (!session) {
