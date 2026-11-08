@@ -359,7 +359,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     setUploadingPhoto('main')
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = \`profil-koperasi/\${Date.now()}-\${crypto.randomUUID()}.\${extension}\`
+    const path = `profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
@@ -398,7 +398,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     setUploadingPhoto(role)
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = \`profil-koperasi/pengawas/\${Date.now()}-\${crypto.randomUUID()}.\${extension}\`
+    const path = `profil-koperasi/pengawas/${Date.now()}-${crypto.randomUUID()}.${extension}`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
@@ -495,7 +495,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     }))
 
     const { error } = await supabase.from('koperasi_pengawas_periode').upsert(rows)
-    setMessage(error ? error.message : \`Pengawas periode \${editingPeriod.periode} berhasil disimpan.\`)
+    setMessage(error ? error.message : `Pengawas periode ${editingPeriod.periode} berhasil disimpan.`)
     if (!error) {
       setEditingPeriod(null)
       onSaved()
@@ -555,7 +555,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                     {role}
                     <input
                       value={editingPeriod[role].nama || ''}
-                      placeholder={\`Nama \${role}\`}
+                      placeholder={`Nama ${role}`}
                       onChange={e => updateEditingRole(role, 'nama', e.target.value)}
                     />
                   </label>
@@ -572,7 +572,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                   {editingPeriod[role].foto_url && (
                     <img
                       src={editingPeriod[role].foto_url}
-                      alt={\`Foto \${role}\`}
+                      alt={`Foto ${role}`}
                       style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 12, marginTop: 6 }}
                     />
                   )}
@@ -607,7 +607,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                   <td colSpan="8" style={{ textAlign: 'center', padding: 24 }}>Belum ada data pengawas periode.</td>
                 </tr>
               ) : periodGroups.map((group, index) => (
-                <tr key={group.periode || \`empty-\${index}\`}>
+                <tr key={group.periode || `empty-${index}`}>
                   <td><strong>{group.periode || 'Belum diisi'}</strong></td>
                   <td>{group.Ketua?.nama || '—'}</td>
                   <td>{group.Ketua?.foto_url ? <img src={group.Ketua.foto_url} alt="Foto Ketua" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
