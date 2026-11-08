@@ -395,7 +395,7 @@ function PublicSite() {
                   <div className="card-body">
                     <span className="date"><CalendarDays size={14} /> {formatDate(item.event_date)}</span>
                     <h3>{item.title}</h3>
-                    <p>{item.excerpt}</p>
+                    <p className="activity-excerpt">{item.excerpt}</p>
                     <button type="button" className="text-link" onClick={() => scrollToSection("kegiatan")}>Selengkapnya <ArrowRight size={16} /></button>
                   </div>
                 </article>
