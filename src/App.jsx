@@ -336,13 +336,25 @@ function PublicSite() {
             </div>
 
             {Array.isArray(data.profile?.misi) && data.profile.misi.filter(Boolean).length > 0 && (
-              <div className="profile-block">
-                <div className="section-heading"><h2><span><Leaf size={22} /></span>Misi</h2></div>
-                <div className="mission-grid">
-                  {data.profile.misi.filter(Boolean).map((item, index) => (
-                    <article className="mission-item" key={index}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{item}</p></article>
-                  ))}
-                </div>
+              <div className="profile-block profile-mission-block">
+                <article className="profile-card profile-card-misi">
+                  <div className="misi-heading">
+                    <div className="misi-mark">04</div>
+                    <div>
+                      <span className="section-kicker">MISI</span>
+                      <h3>Komitmen dan Langkah Koperasi</h3>
+                    </div>
+                  </div>
+                  <div className="misi-divider" />
+                  <div className="mission-grid">
+                    {data.profile.misi.filter(Boolean).map((item, index) => (
+                      <article className="mission-item" key={index}>
+                        <strong>{String(index + 1).padStart(2, '0')}</strong>
+                        <p>{item}</p>
+                      </article>
+                    ))}
+                  </div>
+                </article>
               </div>
             )}
 
