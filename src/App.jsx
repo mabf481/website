@@ -199,7 +199,7 @@ function PublicSite() {
               <strong>KOPERASI PERTANIAN</strong>
               <b>LANGGENG LUMBUNG PANGAN</b>
               <b>KEDUNGNENG</b>
-              <small>{data.settings.tagline}</small>
+              <small>{data.profile?.slogan || data.settings.tagline}</small>
             </div>
           </button>
 
@@ -238,9 +238,9 @@ function PublicSite() {
           />
           <div className="hero-overlay" />
           <div className="container hero-content">
-            <div className="eyebrow">KOPERASI PERTANIAN</div>
-            <h1>{data.settings.hero_title}</h1>
-            <p>{data.settings.hero_subtitle}</p>
+            <div className="eyebrow">PROFIL KOPERASI</div>
+            <h1>{data.profile?.nama || data.settings.hero_title}</h1>
+            <p>{data.profile?.slogan || data.settings.hero_subtitle}</p>
             <div className="hero-actions">
               <button type="button" className="primary-button" onClick={() => scrollToSection("profil")}>Profil Koperasi <ArrowRight size={18} /></button>
               <button className="secondary-button"><Play size={18} fill="currentColor" /> Video Profil</button>
