@@ -18,7 +18,7 @@ import {
   Search,
   Users,
   X,
-  PlayCircle,
+  CirclePlay,
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import Dashboard from './Dashboard'
@@ -171,7 +171,7 @@ function PublicSite() {
           <div className="socials">
             <a href="#" aria-label="Facebook"><AtSign size={16} /></a>
             <a href="#" aria-label="Instagram"><Camera size={16} /></a>
-            <a href="#" aria-label="YouTube"><PlayCircle size={16} /></a>
+            <a href="#" aria-label="YouTube"><CirclePlay size={16} /></a>
           </div>
         </div>
       </header>
