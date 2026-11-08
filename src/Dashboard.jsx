@@ -348,6 +348,7 @@ function ProfileManager({ profile, pengawas, pengurus, divisi, onSaved, setMessa
     if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return}
     setUploadingPhoto('main'); setMessage('Mengunggah foto...')
     const extension=file.name.split('.').pop()?.toLowerCase()||'jpg'
+    // Upload path kept as a native template literal for Vite/Cloudflare builds.
     const path=`profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
     const {error}=await supabase.storage.from('koperasi-images').upload(path,file,{cacheControl:'3600',upsert:false})
     if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
