@@ -106,7 +106,7 @@ function scrollToSection(id) {
 }
 
 function PublicSite() {
-  const [data, setData] = useState({ ...fallback, profile: null, units: [], timeline: [] })
+  const [data, setData] = useState({ ...fallback, profile: null, units: [], timeline: [], pengawas: [], pengurus: [], divisi: [] })
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -130,11 +130,14 @@ function PublicSite() {
         supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
         supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
         supabase.from('koperasi_timeline').select('*').order('urutan'),
+        supabase.from('koperasi_pengawas_periode').select('*').eq('aktif', true).order('urutan'),
+        supabase.from('koperasi_pengurus_periode').select('*').eq('aktif', true).order('urutan'),
+        supabase.from('koperasi_divisi_periode').select('*').eq('aktif', true).order('urutan'),
       ])
 
       if (!active) return
 
-      const [settings, stats, activities, products, gallery, profile, units, timeline] = results
+      const [settings, stats, activities, products, gallery, profile, units, timeline, pengawas, pengurus, divisi] = results
       setData({
         settings: settings.data || fallback.settings,
         stats: stats.data?.length ? stats.data : fallback.stats,
@@ -144,6 +147,9 @@ function PublicSite() {
         profile: profile.data || null,
         units: units.data || [],
         timeline: timeline.data || [],
+        pengawas: pengawas.data || [],
+        pengurus: pengurus.data || [],
+        divisi: divisi.data || [],
       })
       setLoading(false)
     }
@@ -358,23 +364,24 @@ function PublicSite() {
               </div>
             )}
 
-            {data.units.length > 0 && (
-              <div className="profile-block">
-                <div className="section-heading"><h2><span><Leaf size={22} /></span>Unit Usaha</h2></div>
-                <div className="three-column">
-                  {data.units.map((item) => <article className="profile-card profile-unit-card" key={item.id}><div className="profile-icon">{item.icon}</div><h3>{item.nama}</h3><p>{item.deskripsi}</p></article>)}
-                </div>
-              </div>
-            )}
+            <PeriodPublicSection
+              title="Pengawas"
+              rows={data.pengawas}
+              roles={['Ketua Pengawas', 'Anggota 1', 'Anggota 2']}
+            />
 
-            {data.timeline.length > 0 && (
-              <div className="profile-block">
-                <div className="section-heading"><h2><span><CalendarDays size={22} /></span>Perjalanan Koperasi</h2></div>
-                <div className="timeline">
-                  {data.timeline.map((item) => <article className="timeline-item" key={item.id}><strong>{item.tahun}</strong><div><h3>{item.judul}</h3><p>{item.deskripsi}</p></div></article>)}
-                </div>
-              </div>
-            )}
+            <PeriodPublicSection
+              title="Pengurus"
+              rows={data.pengurus}
+              roles={['Ketua', 'Sekretaris', 'Bendahara']}
+            />
+
+            <PeriodPublicSection
+              title="Divisi"
+              rows={data.divisi}
+              roles={['Keanggotaan', 'Bisnis', 'Pendidikan dan Pelatihan']}
+            />
+
           </div>
         </section>
 
@@ -455,6 +462,32 @@ function PublicSite() {
       </footer>
 
       {loading && <div className="loading">Memuat data...</div>}
+    </div>
+  )
+}
+
+function PeriodPublicSection({ title, rows, roles }) {
+  const activeRows = Array.isArray(rows) ? rows : []
+  if (!activeRows.length) return null
+  const period = activeRows.find((row) => row.periode)?.periode || ''
+  return (
+    <div className="profile-block">
+      <div className="section-heading"><h2>{title}</h2></div>
+      {period && <div className="period-public-label">Periode {period}</div>}
+      <div className="three-column">
+        {roles.map((role) => {
+          const row = activeRows.find((item) => item.jabatan === role || item.divisi === role)
+          if (!row) return null
+          return (
+            <article className="profile-card period-public-card" key={role}>
+              {row.foto_url && <img src={row.foto_url} alt={row.nama || role} />}
+              <span className="section-kicker">{title}</span>
+              <h3>{row.nama || '-'}</h3>
+              <p>{role}</p>
+            </article>
+          )
+        })}
+      </div>
     </div>
   )
 }
