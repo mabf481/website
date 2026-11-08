@@ -102,7 +102,7 @@ function StatIcon({ icon }) {
 }
 
 function PublicSite() {
-  const [data, setData] = useState(fallback)
+  const [data, setData] = useState({ ...fallback, profile: null, units: [], timeline: [] })
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -123,17 +123,23 @@ function PublicSite() {
         supabase.from('activities').select('*').order('sort_order'),
         supabase.from('products').select('*').order('sort_order'),
         supabase.from('gallery').select('*').order('sort_order'),
+        supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
+        supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
+        supabase.from('koperasi_timeline').select('*').order('urutan'),
       ])
 
       if (!active) return
 
-      const [settings, stats, activities, products, gallery] = results
+      const [settings, stats, activities, products, gallery, profile, units, timeline] = results
       setData({
         settings: settings.data || fallback.settings,
         stats: stats.data?.length ? stats.data : fallback.stats,
         activities: activities.data?.length ? activities.data : fallback.activities,
         products: products.data?.length ? products.data : fallback.products,
         gallery: gallery.data?.length ? gallery.data : fallback.gallery,
+        profile: profile.data || null,
+        units: units.data || [],
+        timeline: timeline.data || [],
       })
       setLoading(false)
     }
@@ -269,17 +275,46 @@ function PublicSite() {
         </section>
 
         <section id="profil" className="intro section">
-          <div className="container intro-grid">
-            <div>
-              <span className="section-kicker">TENTANG KAMI</span>
-              <h2>Membangun ekosistem pertanian yang kuat dari Kedungneng.</h2>
+          <div className="container">
+            <div className="intro-grid">
+              <div>
+                <span className="section-kicker">PROFIL KOPERASI</span>
+                <h2>{data.profile?.nama || 'Koperasi Pertanian Langgeng Lumbung Pangan Kedungneng'}</h2>
+                <p className="profile-slogan">{data.profile?.slogan}</p>
+              </div>
+              <div>
+                <p>{data.profile?.deskripsi || 'LLP Kedungneng hadir sebagai wadah usaha bersama untuk memperkuat petani dan ketahanan pangan.'}</p>
+                <p>{data.profile?.sejarah}</p>
+              </div>
             </div>
-            <p>
-              LLP Kedungneng hadir sebagai wadah usaha bersama untuk memperkuat petani,
-              mengembangkan produk pertanian, dan membangun ketahanan pangan yang
-              berkelanjutan. Konten di halaman ini terhubung langsung ke Supabase sehingga
-              data kegiatan, produk, statistik, dan dokumentasi dapat dikelola dari dashboard.
-            </p>
+
+            <div className="profile-highlight-grid">
+              <article className="profile-card"><span className="section-kicker">VISI</span><p>{data.profile?.visi}</p></article>
+              <article className="profile-card"><span className="section-kicker">LEGALITAS</span><p>{data.profile?.legalitas}</p><p>{data.profile?.alamat}</p></article>
+            </div>
+
+            <div className="profile-block">
+              <span className="section-kicker">MISI</span>
+              <div className="mission-grid">
+                {(Array.isArray(data.profile?.misi) ? data.profile.misi : []).map((item, index) => (
+                  <article className="mission-item" key={index}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{item}</p></article>
+                ))}
+              </div>
+            </div>
+
+            <div className="profile-block">
+              <div className="section-heading"><h2><span><Leaf size={22} /></span>Unit Usaha</h2></div>
+              <div className="three-column">
+                {data.units.map((item) => <article className="profile-card" key={item.id}><div className="profile-icon">{item.icon}</div><h3>{item.nama}</h3><p>{item.deskripsi}</p></article>)}
+              </div>
+            </div>
+
+            <div className="profile-block">
+              <div className="section-heading"><h2><span><CalendarDays size={22} /></span>Perjalanan Koperasi</h2></div>
+              <div className="timeline">
+                {data.timeline.map((item) => <article className="timeline-item" key={item.id}><strong>{item.tahun}</strong><div><h3>{item.judul}</h3><p>{item.deskripsi}</p></div></article>)}
+              </div>
+            </div>
           </div>
         </section>
 
