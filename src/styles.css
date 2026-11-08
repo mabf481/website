@@ -429,3 +429,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .profile-card-misi { padding:24px 20px; }
   .misi-heading h3 { font-size:19px; }
 }
+
+
+/* Batasi cuplikan kegiatan agar artikel panjang tetap tersembunyi di kartu */
+.activity-excerpt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;}
