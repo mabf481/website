@@ -368,7 +368,7 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
     }
 
     const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
-    setForm(current => ({ ...current, hero_image_url: data.publicUrl }))
+    setForm(current => ({ ...current, foto_profil_url: data.publicUrl }))
     setMessage('Foto berhasil diunggah. Klik Simpan Profil Koperasi untuk menyimpan.')
     setUploadingPhoto(false)
     e.target.value = ''
@@ -432,9 +432,9 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
             Foto utama
             <input type="file" accept="image/*" onChange={uploadMainPhoto} disabled={uploadingPhoto} />
             <small>{uploadingPhoto ? 'Sedang mengunggah...' : 'Pilih foto dari komputer (maks. 5 MB).'}</small>
-            {form.hero_image_url && (
+            {form.foto_profil_url && (
               <div style={{ marginTop: 10 }}>
-                <img src={form.hero_image_url} alt="Preview foto utama" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
+                <img src={form.hero_image_url} alt="Preview foto profil koperasi" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
               </div>
             )}
           </label>
