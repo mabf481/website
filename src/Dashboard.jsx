@@ -409,7 +409,7 @@ async function uploadPeriodPhoto(e, section, role, setMessage, setUploadingPhoto
   if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
   const {data}=supabase.storage.from('koperasi-images').getPublicUrl(path)
   e.target.dataset.uploadedUrl=data.publicUrl
-  e.target.dispatchEvent(new CustomEvent('period-photo-uploaded',{detail:{role,url:data.publicUrl}}))
+  e.target.dispatchEvent(new CustomEvent('period-photo-uploaded',{detail:{section,role,url:data.publicUrl}}))
   setMessage('Foto berhasil diunggah.')
   setUploadingPhoto(null); e.target.value=''
 }
@@ -444,7 +444,7 @@ function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,se
   function updateRole(role,key,value){setEditing(current=>({...current,[role]:{...current[role],[key]:value}}))}
 
   useEffect(()=>{
-    const handler=e=>updateRole(e.detail.role,'foto_url',e.detail.url)
+    const handler=e=>{ if(e.detail.section===section) updateRole(e.detail.role,'foto_url',e.detail.url) }
     window.addEventListener('period-photo-uploaded',handler)
     return()=>window.removeEventListener('period-photo-uploaded',handler)
   })
