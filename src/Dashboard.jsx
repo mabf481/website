@@ -400,19 +400,18 @@ function ProfileManager({ profile, pengawas, pengurus, divisi, onSaved, setMessa
 }
 
 async function uploadPeriodPhoto(e, section, role, setMessage, setUploadingPhoto) {
-  const file=e.target.files?.[0]; if(!file) return
-  if(!file.type.startsWith('image/')){setMessage('File harus berupa gambar.');e.target.value='';return}
-  if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return}
+  const file=e.target.files?.[0]; if(!file) return ''
+  if(!file.type.startsWith('image/')){setMessage('File harus berupa gambar.');e.target.value='';return ''}
+  if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return ''}
   const key=`${section}-${role}`; setUploadingPhoto(key); setMessage('Mengunggah foto...')
   const extension=file.name.split('.').pop()?.toLowerCase()||'jpg'
   const path=`profil-koperasi/${section}/${Date.now()}-${crypto.randomUUID()}.${extension}`
   const {error}=await supabase.storage.from('koperasi-images').upload(path,file,{cacheControl:'3600',upsert:false})
-  if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
+  if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return ''}
   const {data}=supabase.storage.from('koperasi-images').getPublicUrl(path)
-  e.target.dataset.uploadedUrl=data.publicUrl
-  e.target.dispatchEvent(new CustomEvent('period-photo-uploaded',{detail:{section,role,url:data.publicUrl}}))
   setMessage('Foto berhasil diunggah.')
   setUploadingPhoto(null); e.target.value=''
+  return data.publicUrl
 }
 
 function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,setMessage,uploadingPhoto,setUploadingPhoto}) {
@@ -444,12 +443,6 @@ function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,se
   }
   function updateRole(role,key,value){setEditing(current=>({...current,[role]:{...current[role],[key]:value}}))}
 
-  useEffect(()=>{
-    const handler=e=>{ if(e.detail.section===section) updateRole(e.detail.role,'foto_url',e.detail.url) }
-    window.addEventListener('period-photo-uploaded',handler)
-    return()=>window.removeEventListener('period-photo-uploaded',handler)
-  })
-
   async function save(e){
     e.preventDefault()
     if(!editing?.periode.trim()){setMessage('Periode wajib diisi.');return}
@@ -480,7 +473,7 @@ function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,se
         <div className="form-grid" style={{marginTop:16}}>
           {roles.map(role=><div key={role.key} className="pengawas-editor-person">
             <label>{role.label}<input value={editing[role.key]?.nama||''} placeholder={`Nama ${role.label}`} onChange={e=>updateRole(role.key,'nama',e.target.value)}/></label>
-            <label>Foto<input type="file" accept="image/*" onChange={e=>uploadPeriodPhoto(e,section,role.key,setMessage,setUploadingPhoto)} disabled={uploadingPhoto===`${section}-${role.key}`}/><small>{uploadingPhoto===`${section}-${role.key}`?'Sedang mengunggah...':'Maks. 5 MB.'}</small></label>
+            <label>Foto<input type="file" accept="image/*" onChange={async e=>{const url=await uploadPeriodPhoto(e,section,role.key,setMessage,setUploadingPhoto);if(url)updateRole(role.key,'foto_url',url)}} disabled={uploadingPhoto===`${section}-${role.key}`}/><small>{uploadingPhoto===`${section}-${role.key}`?'Sedang mengunggah...':'Maks. 5 MB.'}</small></label>
             {editing[role.key]?.foto_url&&<img src={editing[role.key].foto_url} alt={`Foto ${role.label}`} style={{width:72,height:72,objectFit:'cover',borderRadius:12,marginTop:6}}/>}
           </div>)}
         </div>
