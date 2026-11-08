@@ -550,14 +550,33 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
 
             <div className="form-grid" style={{ marginTop: 16 }}>
               {roleOrder.map(role => (
-                <label key={role} className="wide">
-                  {role}
-                  <input
-                    value={editingPeriod[role].nama || ''}
-                    placeholder={\`Nama \${role}\`}
-                    onChange={e => updateEditingRole(role, 'nama', e.target.value)}
-                  />
-                </label>
+                <div key={role} className="pengawas-editor-person">
+                  <label>
+                    {role}
+                    <input
+                      value={editingPeriod[role].nama || ''}
+                      placeholder={\`Nama \${role}\`}
+                      onChange={e => updateEditingRole(role, 'nama', e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Foto
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => uploadPersonPhoto(e, role)}
+                      disabled={uploadingPhoto === role}
+                    />
+                    <small>{uploadingPhoto === role ? 'Sedang mengunggah...' : 'Maks. 5 MB.'}</small>
+                  </label>
+                  {editingPeriod[role].foto_url && (
+                    <img
+                      src={editingPeriod[role].foto_url}
+                      alt={\`Foto \${role}\`}
+                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 12, marginTop: 6 }}
+                    />
+                  )}
+                </div>
               ))}
             </div>
 
@@ -578,35 +597,24 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                 <th>Sekretaris</th>
                 <th>Foto</th>
                 <th>Bendahara</th>
+                <th>Foto</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {periodGroups.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 24 }}>Belum ada data pengawas periode.</td>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: 24 }}>Belum ada data pengawas periode.</td>
                 </tr>
               ) : periodGroups.map((group, index) => (
                 <tr key={group.periode || \`empty-\${index}\`}>
                   <td><strong>{group.periode || 'Belum diisi'}</strong></td>
                   <td>{group.Ketua?.nama || '—'}</td>
-                  <td>
-                    {group.Ketua?.foto_url
-                      ? <img src={group.Ketua.foto_url} alt="Foto Ketua" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} />
-                      : '—'}
-                  </td>
+                  <td>{group.Ketua?.foto_url ? <img src={group.Ketua.foto_url} alt="Foto Ketua" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
                   <td>{group.Sekretaris?.nama || '—'}</td>
-                  <td>
-                    {group.Sekretaris?.foto_url
-                      ? <img src={group.Sekretaris.foto_url} alt="Foto Sekretaris" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} />
-                      : '—'}
-                  </td>
-                  <td>
-                    <div>{group.Bendahara?.nama || '—'}</div>
-                    {group.Bendahara?.foto_url && (
-                      <img src={group.Bendahara.foto_url} alt="Foto Bendahara" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, marginTop: 6 }} />
-                    )}
-                  </td>
+                  <td>{group.Sekretaris?.foto_url ? <img src={group.Sekretaris.foto_url} alt="Foto Sekretaris" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
+                  <td>{group.Bendahara?.nama || '—'}</td>
+                  <td>{group.Bendahara?.foto_url ? <img src={group.Bendahara.foto_url} alt="Foto Bendahara" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
                   <td>
                     <div className="table-actions">
                       <button type="button" onClick={() => openEditPeriod(group)}>Edit</button>
