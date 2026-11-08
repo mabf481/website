@@ -301,7 +301,7 @@ function PublicSite() {
               {data.profile?.sejarah && (
                 <div className="profile-card profile-card-story">
                   <span className="section-kicker">SEJARAH</span>
-                  <p>{data.profile.sejarah}</p>
+                  <p className="profile-long-text">{data.profile.sejarah}</p>
                 </div>
               )}
             </div>
@@ -332,7 +332,7 @@ function PublicSite() {
               <div className="profile-block">
                 <div className="section-heading"><h2><span><Leaf size={22} /></span>Unit Usaha</h2></div>
                 <div className="three-column">
-                  {data.units.map((item) => <article className="profile-card" key={item.id}><div className="profile-icon">{item.icon}</div><h3>{item.nama}</h3><p>{item.deskripsi}</p></article>)}
+                  {data.units.map((item) => <article className="profile-card profile-unit-card" key={item.id}><div className="profile-icon">{item.icon}</div><h3>{item.nama}</h3><p>{item.deskripsi}</p></article>)}
                 </div>
               </div>
             )}
