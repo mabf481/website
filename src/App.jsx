@@ -296,7 +296,14 @@ function PublicSite() {
             <div className="profile-highlight-grid">
               {data.profile?.sejarah && (
                 <article className="profile-card profile-card-story">
-                  <span className="section-kicker">SEJARAH</span>
+                  <div className="history-card-heading">
+                    <div className="history-card-mark">01</div>
+                    <div>
+                      <span className="section-kicker">SEJARAH</span>
+                      <h3>Perjalanan LLP Kedungneng</h3>
+                    </div>
+                  </div>
+                  <div className="history-divider" />
                   <p className="profile-long-text">{data.profile.sejarah}</p>
                 </article>
               )}
