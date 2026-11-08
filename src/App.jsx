@@ -6,8 +6,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Coins,
-  Facebook,
-  Instagram,
+  AtSign,
+  Camera,
   Leaf,
   Mail,
   MapPin,
@@ -18,7 +18,7 @@ import {
   Search,
   Users,
   X,
-  Youtube,
+  PlayCircle,
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import Dashboard from './Dashboard'
@@ -169,9 +169,9 @@ function PublicSite() {
             <span className="desktop-only"><Phone size={15} /> {data.settings.phone}</span>
           </div>
           <div className="socials">
-            <a href="#" aria-label="Facebook"><Facebook size={16} /></a>
-            <a href="#" aria-label="Instagram"><Instagram size={16} /></a>
-            <a href="#" aria-label="YouTube"><Youtube size={16} /></a>
+            <a href="#" aria-label="Facebook"><AtSign size={16} /></a>
+            <a href="#" aria-label="Instagram"><Camera size={16} /></a>
+            <a href="#" aria-label="YouTube"><PlayCircle size={16} /></a>
           </div>
         </div>
       </header>
