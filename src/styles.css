@@ -288,3 +288,26 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 .manager-section{margin-top:2.5rem;padding-top:2rem;border-top:1px solid rgba(31,61,46,.1)}
 .manager-section h2{margin:0 0 .25rem}.manager-section .manager-toolbar{margin-bottom:1rem}
+
+
+/* Hashless navigation buttons */
+.nav-links button, .brand, .social-link, .section-link, .text-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+  padding: 0;
+}
+.nav-links button { font-weight: 600; font-size: 14px; position: relative; white-space: nowrap; }
+.nav-links button::after { content: ''; position: absolute; left: 0; right: 0; bottom: -18px; height: 2px; background: var(--green); transform: scaleX(0); transition: .2s; }
+.nav-links button:hover::after, .nav-links button.active::after { transform: scaleX(1); }
+.social-link { opacity: .9; display: grid; place-items: center; }
+.social-link:hover { opacity: 1; transform: translateY(-1px); }
+.section-link, .text-link { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-weight: 700; font-size: 13px; }
+@media (max-width: 900px) {
+  .nav-links button { padding: 13px 5px; width: 100%; }
+  .nav-links button::after { bottom: 4px; }
+}
