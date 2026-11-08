@@ -338,7 +338,9 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
     e.preventDefault()
     const payload = {
       ...form,
-      misi: Array.isArray(form.misi) ? form.misi : String(form.misi || '').split('\n').map(x => x.trim()).filter(Boolean),
+      misi: Array.isArray(form.misi)
+        ? form.misi.map(x => String(x).trim()).filter(Boolean)
+        : String(form.misi || '').split('\n').map(x => x.trim()).filter(Boolean),
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('koperasi_profil').upsert(payload)
@@ -369,7 +371,7 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
     if (!error) onSaved()
   }
 
-  const missionText = Array.isArray(form.misi) ? form.misi.join('\n') : (form.misi || '')
+  const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\n') : (form.misi || '')
 
   return (
     <div className="manager">
