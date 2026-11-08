@@ -293,26 +293,23 @@ function PublicSite() {
               )}
             </div>
 
-            <div className="profile-story">
-              <div className="profile-card profile-card-story">
-                <span className="section-kicker">TENTANG KAMI</span>
-                <p>{data.profile?.deskripsi || 'LLP Kedungneng hadir sebagai wadah usaha bersama untuk memperkuat petani dan ketahanan pangan.'}</p>
-              </div>
+            <div className="profile-highlight-grid">
               {data.profile?.sejarah && (
-                <div className="profile-card profile-card-story">
+                <article className="profile-card profile-card-story">
                   <span className="section-kicker">SEJARAH</span>
                   <p className="profile-long-text">{data.profile.sejarah}</p>
-                </div>
+                </article>
               )}
-            </div>
-
-            <div className="profile-highlight-grid">
-              {data.profile?.visi && <article className="profile-card"><span className="section-kicker">VISI</span><p>{data.profile.visi}</p></article>}
-              {(data.profile?.legalitas || data.profile?.alamat) && (
+              {data.profile?.visi && (
+                <article className="profile-card">
+                  <span className="section-kicker">VISI</span>
+                  <p>{data.profile.visi}</p>
+                </article>
+              )}
+              {data.profile?.legalitas && (
                 <article className="profile-card">
                   <span className="section-kicker">LEGALITAS</span>
-                  {data.profile?.legalitas && <p>{data.profile.legalitas}</p>}
-                  {data.profile?.alamat && <p>{data.profile.alamat}</p>}
+                  <p>{data.profile.legalitas}</p>
                 </article>
               )}
             </div>
