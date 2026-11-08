@@ -354,7 +354,7 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
     setUploadingPhoto(true)
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `profil-koperasi/\${Date.now()}-\${crypto.randomUUID()}.\${extension}`
+    const path = `profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
