@@ -54,8 +54,18 @@ export default function Dashboard() {
   }, [session])
 
   async function load() {
-    const [{ data: me }, settings, stats, activities, products, gallery] = await Promise.all([
-      supabase.from('koperasi_admin').select('id,email,nama,role,active').eq('id', session.user.id).maybeSingle(),
+    const [
+      { data: me },
+      settings,
+      profile,
+      units,
+      timeline,
+      stats,
+      activities,
+      products,
+      gallery,
+    ] = await Promise.all([
+      supabase.from('admin_users').select('id,phone,name,status').eq('id', session.user.id).eq('status', 'active').maybeSingle(),
       supabase.from('site_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
       supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
