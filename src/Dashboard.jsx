@@ -435,13 +435,13 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     if (!error) onSaved()
   }
 
-  const roleOrder = ['Ketua', 'Sekretaris', 'Bendahara']
+  const roleOrder = ['Ketua', 'Anggota 1', 'Anggota 2']
 
   const periodGroups = useMemo(() => {
     const groups = new Map()
     pengawasList.filter(item => item.periode?.trim()).forEach(item => {
       const key = item.periode.trim()
-      if (!groups.has(key)) groups.set(key, { periode: key, Ketua: null, Sekretaris: null, Bendahara: null })
+      if (!groups.has(key)) groups.set(key, { periode: key, Ketua: null, 'Anggota 1': null, 'Anggota 2': null })
       const group = groups.get(key)
       if (roleOrder.includes(item.jabatan)) group[item.jabatan] = item
     })
@@ -453,8 +453,8 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       isNew: true,
       periode: '',
       Ketua: { jabatan: 'Ketua', nama: '', foto_url: '', urutan: 1 },
-      Sekretaris: { jabatan: 'Sekretaris', nama: '', foto_url: '', urutan: 2 },
-      Bendahara: { jabatan: 'Bendahara', nama: '', foto_url: '', urutan: 3 },
+      'Anggota 1': { jabatan: 'Anggota 1', nama: '', foto_url: '', urutan: 2 },
+      'Anggota 2': { jabatan: 'Anggota 2', nama: '', foto_url: '', urutan: 3 },
     })
   }
 
@@ -463,8 +463,8 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       isNew: false,
       periode: group.periode || '',
       Ketua: group.Ketua ? { ...group.Ketua } : { jabatan: 'Ketua', nama: '', foto_url: '', urutan: 1 },
-      Sekretaris: group.Sekretaris ? { ...group.Sekretaris } : { jabatan: 'Sekretaris', nama: '', foto_url: '', urutan: 2 },
-      Bendahara: group.Bendahara ? { ...group.Bendahara } : { jabatan: 'Bendahara', nama: '', foto_url: '', urutan: 3 },
+      'Anggota 1': group['Anggota 1'] ? { ...group['Anggota 1'] } : { jabatan: 'Anggota 1', nama: '', foto_url: '', urutan: 2 },
+      'Anggota 2': group['Anggota 2'] ? { ...group['Anggota 2'] } : { jabatan: 'Anggota 2', nama: '', foto_url: '', urutan: 3 },
     })
   }
 
@@ -529,15 +529,15 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       <div className="profile-block" style={{ marginTop: 28 }}>
         <div className="section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
           <div>
-            <h2><Users size={22} /> Pengurus Periode</h2>
-            <p style={{ margin: '6px 0 0', color: '#66736b' }}>Kelola Ketua, Sekretaris, dan Bendahara berdasarkan periode kepengurusan.</p>
+            <h2><Users size={22} /> Pengawas Periode</h2>
+            <p style={{ margin: '6px 0 0', color: '#66736b' }}>Kelola Ketua dan 2 Anggota berdasarkan periode kepengurusan.</p>
           </div>
           <button className="dashboard-primary small" type="button" onClick={openAddPeriod}><Plus size={16} /> Tambah</button>
         </div>
 
         {editingPeriod && (
           <form className="editor-card" onSubmit={savePengawasPeriod} style={{ marginTop: 18 }}>
-            <h2>{editingPeriod.isNew ? 'Tambah' : 'Edit'} Pengurus Periode</h2>
+            <h2>{editingPeriod.isNew ? 'Tambah' : 'Edit'} Pengawas Periode</h2>
             <label>
               Periode
               <input
@@ -594,9 +594,9 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                 <th>Periode</th>
                 <th>Ketua</th>
                 <th>Foto</th>
-                <th>Sekretaris</th>
+                <th>Anggota</th>
                 <th>Foto</th>
-                <th>Bendahara</th>
+                <th>Anggota</th>
                 <th>Foto</th>
                 <th>Aksi</th>
               </tr>
@@ -607,10 +607,10 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                   <td><strong>{group.periode}</strong></td>
                   <td>{group.Ketua?.nama || '—'}</td>
                   <td>{group.Ketua?.foto_url ? <img src={group.Ketua.foto_url} alt="Foto Ketua" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
-                  <td>{group.Sekretaris?.nama || '—'}</td>
-                  <td>{group.Sekretaris?.foto_url ? <img src={group.Sekretaris.foto_url} alt="Foto Sekretaris" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
-                  <td>{group.Bendahara?.nama || '—'}</td>
-                  <td>{group.Bendahara?.foto_url ? <img src={group.Bendahara.foto_url} alt="Foto Bendahara" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
+                  <td>{group['Anggota 1']?.nama || '—'}</td>
+                  <td>{group['Anggota 1']?.foto_url ? <img src={group['Anggota 1'].foto_url} alt="Foto Anggota" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
+                  <td>{group['Anggota 2']?.nama || '—'}</td>
+                  <td>{group['Anggota 2']?.foto_url ? <img src={group['Anggota 2'].foto_url} alt="Foto Anggota" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
                   <td>
                     <div className="table-actions">
                       <button type="button" onClick={() => openEditPeriod(group)}>Edit</button>
