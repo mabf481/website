@@ -280,50 +280,71 @@ function PublicSite() {
 
         <section id="profil" className="intro section">
           <div className="container">
-            <div className="intro-grid">
-              <div>
+            <div className="profile-intro">
+              <div className="profile-intro-copy">
                 <span className="section-kicker">PROFIL KOPERASI</span>
                 <h2>{data.profile?.nama || 'Koperasi Pertanian Langgeng Lumbung Pangan Kedungneng'}</h2>
-                <p className="profile-slogan">{data.profile?.slogan}</p>
+                {data.profile?.slogan && <p className="profile-slogan">{data.profile.slogan}</p>}
               </div>
-              <div>
-                {data.profile?.foto_profil_url && (
-                  <div className="profile-photo">
-                    <img src={data.profile.foto_profil_url} alt="Foto Profil Koperasi LLP Kedungneng" />
-                  </div>
-                )}
+              {data.profile?.foto_profil_url && (
+                <div className="profile-photo">
+                  <img src={data.profile.foto_profil_url} alt="Foto Profil Koperasi LLP Kedungneng" />
+                </div>
+              )}
+            </div>
+
+            <div className="profile-story">
+              <div className="profile-card profile-card-story">
+                <span className="section-kicker">TENTANG KAMI</span>
                 <p>{data.profile?.deskripsi || 'LLP Kedungneng hadir sebagai wadah usaha bersama untuk memperkuat petani dan ketahanan pangan.'}</p>
-                <p>{data.profile?.sejarah}</p>
               </div>
+              {data.profile?.sejarah && (
+                <div className="profile-card profile-card-story">
+                  <span className="section-kicker">SEJARAH</span>
+                  <p>{data.profile.sejarah}</p>
+                </div>
+              )}
             </div>
 
             <div className="profile-highlight-grid">
-              <article className="profile-card"><span className="section-kicker">VISI</span><p>{data.profile?.visi}</p></article>
-              <article className="profile-card"><span className="section-kicker">LEGALITAS</span><p>{data.profile?.legalitas}</p><p>{data.profile?.alamat}</p></article>
+              {data.profile?.visi && <article className="profile-card"><span className="section-kicker">VISI</span><p>{data.profile.visi}</p></article>}
+              {(data.profile?.legalitas || data.profile?.alamat) && (
+                <article className="profile-card">
+                  <span className="section-kicker">LEGALITAS</span>
+                  {data.profile?.legalitas && <p>{data.profile.legalitas}</p>}
+                  {data.profile?.alamat && <p>{data.profile.alamat}</p>}
+                </article>
+              )}
             </div>
 
-            <div className="profile-block">
-              <span className="section-kicker">MISI</span>
-              <div className="mission-grid">
-                {(Array.isArray(data.profile?.misi) ? data.profile.misi : []).map((item, index) => (
-                  <article className="mission-item" key={index}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{item}</p></article>
-                ))}
+            {Array.isArray(data.profile?.misi) && data.profile.misi.filter(Boolean).length > 0 && (
+              <div className="profile-block">
+                <div className="section-heading"><h2><span><Leaf size={22} /></span>Misi</h2></div>
+                <div className="mission-grid">
+                  {data.profile.misi.filter(Boolean).map((item, index) => (
+                    <article className="mission-item" key={index}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{item}</p></article>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="profile-block">
-              <div className="section-heading"><h2><span><Leaf size={22} /></span>Unit Usaha</h2></div>
-              <div className="three-column">
-                {data.units.map((item) => <article className="profile-card" key={item.id}><div className="profile-icon">{item.icon}</div><h3>{item.nama}</h3><p>{item.deskripsi}</p></article>)}
+            {data.units.length > 0 && (
+              <div className="profile-block">
+                <div className="section-heading"><h2><span><Leaf size={22} /></span>Unit Usaha</h2></div>
+                <div className="three-column">
+                  {data.units.map((item) => <article className="profile-card" key={item.id}><div className="profile-icon">{item.icon}</div><h3>{item.nama}</h3><p>{item.deskripsi}</p></article>)}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="profile-block">
-              <div className="section-heading"><h2><span><CalendarDays size={22} /></span>Perjalanan Koperasi</h2></div>
-              <div className="timeline">
-                {data.timeline.map((item) => <article className="timeline-item" key={item.id}><strong>{item.tahun}</strong><div><h3>{item.judul}</h3><p>{item.deskripsi}</p></div></article>)}
+            {data.timeline.length > 0 && (
+              <div className="profile-block">
+                <div className="section-heading"><h2><span><CalendarDays size={22} /></span>Perjalanan Koperasi</h2></div>
+                <div className="timeline">
+                  {data.timeline.map((item) => <article className="timeline-item" key={item.id}><strong>{item.tahun}</strong><div><h3>{item.judul}</h3><p>{item.deskripsi}</p></div></article>)}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
