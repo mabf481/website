@@ -136,7 +136,7 @@ function PublicSite() {
 
       const [settings, stats, activities, products, gallery, profile, units, timeline] = results
       setData({
-        settings: { ...(settings.data || fallback.settings), hero_image_url: profile.data?.hero_image_url || settings.data?.hero_image_url || fallback.settings.hero_image_url },
+        settings: settings.data || fallback.settings,
         stats: stats.data?.length ? stats.data : fallback.stats,
         activities: activities.data?.length ? activities.data : fallback.activities,
         products: products.data?.length ? products.data : fallback.products,
@@ -287,6 +287,11 @@ function PublicSite() {
                 <p className="profile-slogan">{data.profile?.slogan}</p>
               </div>
               <div>
+                {data.profile?.foto_profil_url && (
+                  <div className="profile-photo">
+                    <img src={data.profile.foto_profil_url} alt="Foto Profil Koperasi LLP Kedungneng" />
+                  </div>
+                )}
                 <p>{data.profile?.deskripsi || 'LLP Kedungneng hadir sebagai wadah usaha bersama untuk memperkuat petani dan ketahanan pangan.'}</p>
                 <p>{data.profile?.sejarah}</p>
               </div>
