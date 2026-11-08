@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [login, setLogin] = useState({ email: '', password: '' })
   const [message, setMessage] = useState('')
   const [tab, setTab] = useState('overview')
-  const [data, setData] = useState({ settings: null, profile: null, units: [], timeline: [], stats: [], activities: [], products: [], gallery: [] })
+  const [data, setData] = useState({ settings: null, profile: null, pengawas: [], units: [], timeline: [], stats: [], activities: [], products: [], gallery: [] })
   const [draft, setDraft] = useState(empty.stats)
   const [editing, setEditing] = useState(null)
 
@@ -58,6 +58,7 @@ export default function Dashboard() {
       { data: me },
       settings,
       profile,
+      pengawas,
       units,
       timeline,
       stats,
@@ -68,6 +69,7 @@ export default function Dashboard() {
       supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).maybeSingle(),
       supabase.from('site_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
+      supabase.from('koperasi_pengawas_periode').select('*').order('urutan'),
       supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
       supabase.from('koperasi_timeline').select('*').order('urutan'),
       supabase.from('site_stats').select('*').order('sort_order'),
@@ -79,6 +81,7 @@ export default function Dashboard() {
     setData({
       settings: settings.data,
       profile: profile.data,
+      pengawas: pengawas.data || [],
       units: units.data || [],
       timeline: timeline.data || [],
       stats: stats.data || [],
@@ -169,7 +172,7 @@ export default function Dashboard() {
 
         {tab === 'overview' && <Overview counts={counts} email={session.user.email} />}
         {tab === 'settings' && <SettingsForm data={data.settings} onSaved={load} setMessage={setMessage} />}
-        {tab === 'profile' && <ProfileManager profile={data.profile} units={data.units} timeline={data.timeline} onSaved={load} setMessage={setMessage} />}
+        {tab === 'profile' && <ProfileManager profile={data.profile} pengawas={data.pengawas} onSaved={load} setMessage={setMessage} />}
         {['stats', 'activities', 'products', 'gallery'].includes(tab) && (
           <ContentManager
             type={tab}
@@ -328,14 +331,14 @@ function ContentManager({ type, items, draft, editing, setEditing, setDraft, onS
 }
 
 
-function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
+function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
   const [form, setForm] = useState(profile || {})
-  const [unitDraft, setUnitDraft] = useState(null)
-  const [timelineDraft, setTimelineDraft] = useState(null)
-  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [pengawasList, setPengawasList] = useState(pengawas || [])
+  const [uploadingPhoto, setUploadingPhoto] = useState(null)
   useEffect(() => setForm(profile || {}), [profile])
+  useEffect(() => setPengawasList(pengawas || []), [pengawas])
 
-  async function uploadMainPhoto(e) {
+  async function uploadPersonPhoto(e, id) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -351,10 +354,10 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
       return
     }
 
-    setUploadingPhoto(true)
+    setUploadingPhoto(id)
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
+    const path = \`profil-koperasi/pengawas/\${id}-\${Date.now()}-\${crypto.randomUUID()}.\${extension}\`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
@@ -362,15 +365,15 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
 
     if (error) {
       setMessage(error.message)
-      setUploadingPhoto(false)
+      setUploadingPhoto(null)
       e.target.value = ''
       return
     }
 
     const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
-    setForm(current => ({ ...current, foto_profil_url: data.publicUrl }))
-    setMessage('Foto berhasil diunggah. Klik Simpan Profil Koperasi untuk menyimpan.')
-    setUploadingPhoto(false)
+    setPengawasList(current => current.map(item => item.id === id ? { ...item, foto_url: data.publicUrl } : item))
+    setMessage('Foto berhasil diunggah. Klik Simpan Pengawas untuk menyimpan.')
+    setUploadingPhoto(null)
     e.target.value = ''
   }
 
@@ -380,7 +383,7 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
       ...form,
       misi: Array.isArray(form.misi)
         ? form.misi.map(x => String(x).trim()).filter(Boolean)
-        : String(form.misi || '').split('\n').map(x => x.trim()).filter(Boolean),
+        : String(form.misi || '').split('\\n').map(x => x.trim()).filter(Boolean),
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('koperasi_profil').upsert(payload)
@@ -388,30 +391,27 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
     if (!error) onSaved()
   }
 
-  async function saveUnit(e) {
-    e.preventDefault()
-    const payload = { ...unitDraft, urutan: Number(unitDraft.urutan || 0), aktif: unitDraft.aktif !== false }
-    const { error } = await supabase.from('koperasi_unit_usaha').upsert(payload)
-    setMessage(error ? error.message : 'Unit usaha berhasil disimpan.')
-    if (!error) { setUnitDraft(null); onSaved() }
-  }
-
-  async function saveTimeline(e) {
-    e.preventDefault()
-    const payload = { ...timelineDraft, urutan: Number(timelineDraft.urutan || 0), aktif: timelineDraft.aktif !== false }
-    const { error } = await supabase.from('koperasi_timeline').upsert(payload)
-    setMessage(error ? error.message : 'Timeline berhasil disimpan.')
-    if (!error) { setTimelineDraft(null); onSaved() }
-  }
-
-  async function remove(table, id, label) {
-    if (!confirm('Hapus ' + label + ' ini?')) return
-    const { error } = await supabase.from(table).delete().eq('id', id)
-    setMessage(error ? error.message : label + ' berhasil dihapus.')
+  async function savePengawas(item) {
+    const payload = {
+      id: item.id,
+      periode: item.periode || '',
+      jabatan: item.jabatan,
+      nama: item.nama || '',
+      foto_url: item.foto_url || '',
+      urutan: Number(item.urutan || 0),
+      aktif: item.aktif !== false,
+      updated_at: new Date().toISOString(),
+    }
+    const { error } = await supabase.from('koperasi_pengawas_periode').upsert(payload)
+    setMessage(error ? error.message : \`\${item.jabatan} berhasil disimpan.\`)
     if (!error) onSaved()
   }
 
-  const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\n') : (form.misi || '')
+  function updatePengawas(id, key, value) {
+    setPengawasList(current => current.map(item => item.id === id ? { ...item, [key]: value } : item))
+  }
+
+  const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\\n') : (form.misi || '')
 
   return (
     <div className="manager">
@@ -430,11 +430,59 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
           </label>
           <label className="wide">Sejarah<textarea rows="6" value={form.sejarah || ''} onChange={e => setForm({ ...form, sejarah: e.target.value })} /></label>
           <label className="wide">Visi<textarea rows="4" value={form.visi || ''} onChange={e => setForm({ ...form, visi: e.target.value })} /></label>
-          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e => setForm({ ...form, misi: e.target.value.split('\n') })} /></label>
+          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e => setForm({ ...form, misi: e.target.value.split('\\n') })} /></label>
         </div>
         <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Profil Koperasi</button>
       </form>
 
+      <div className="profile-block" style={{ marginTop: 28 }}>
+        <div className="section-heading">
+          <h2><Users size={22} /> Pengawas Periode</h2>
+        </div>
+        <p style={{ margin: '0 0 18px', color: '#66736b' }}>
+          Isi periode kepengurusan, nama, dan foto untuk Ketua, Sekretaris, dan Bendahara.
+        </p>
+
+        <div style={{ display: 'grid', gap: 18 }}>
+          {pengawasList.map((item) => (
+            <article key={item.id} className="profile-card" style={{ padding: 22 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 190px', gap: 22, alignItems: 'start' }}>
+                <div className="form-grid">
+                  <label>
+                    Jabatan
+                    <input value={item.jabatan || ''} disabled />
+                  </label>
+                  <label>
+                    Periode
+                    <input value={item.periode || ''} placeholder="Contoh: 2026–2029" onChange={e => updatePengawas(item.id, 'periode', e.target.value)} />
+                  </label>
+                  <label className="wide">
+                    Nama
+                    <input value={item.nama || ''} placeholder={\`Nama \${item.jabatan}\`} onChange={e => updatePengawas(item.id, 'nama', e.target.value)} />
+                  </label>
+                </div>
+                <div>
+                  <label>Foto</label>
+                  {item.foto_url ? (
+                    <img src={item.foto_url} alt={\`Foto \${item.jabatan}\`} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 14, marginBottom: 10 }} />
+                  ) : (
+                    <div style={{ height: 180, borderRadius: 14, background: '#eef3ef', display: 'grid', placeItems: 'center', color: '#718078', marginBottom: 10 }}>
+                      Belum ada foto
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" onChange={e => uploadPersonPhoto(e, item.id)} disabled={uploadingPhoto === item.id} />
+                  <small>{uploadingPhoto === item.id ? 'Sedang mengunggah...' : 'Maks. 5 MB.'}</small>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                <button className="dashboard-primary small" type="button" onClick={() => savePengawas(item)}>
+                  <Save size={16} /> Simpan {item.jabatan}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
