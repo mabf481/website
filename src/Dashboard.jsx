@@ -348,7 +348,7 @@ function ProfileManager({ profile, pengawas, pengurus, divisi, onSaved, setMessa
     if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return}
     setUploadingPhoto('main'); setMessage('Mengunggah foto...')
     const extension=file.name.split('.').pop()?.toLowerCase()||'jpg'
-    const path=\`profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}\`
+    const path=`profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
     const {error}=await supabase.storage.from('koperasi-images').upload(path,file,{cacheControl:'3600',upsert:false})
     if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
     const {data}=supabase.storage.from('koperasi-images').getPublicUrl(path)
@@ -359,13 +359,13 @@ function ProfileManager({ profile, pengawas, pengurus, divisi, onSaved, setMessa
 
   async function saveProfile(e){
     e.preventDefault()
-    const payload={...form,misi:Array.isArray(form.misi)?form.misi.map(x=>String(x).trim()).filter(Boolean):String(form.misi||'').split('\\n').map(x=>x.trim()).filter(Boolean),updated_at:new Date().toISOString()}
+    const payload={...form,misi:Array.isArray(form.misi)?form.misi.map(x=>String(x).trim()).filter(Boolean):String(form.misi||'').split('\n').map(x=>x.trim()).filter(Boolean),updated_at:new Date().toISOString()}
     const {error}=await supabase.from('koperasi_profil').upsert(payload)
     setMessage(error?'error:'+error.message:'Profil koperasi berhasil disimpan.')
     if(!error) onSaved()
   }
 
-  const missionText=Array.isArray(form.misi)?form.misi.filter(Boolean).join('\\n'):(form.misi||'')
+  const missionText=Array.isArray(form.misi)?form.misi.filter(Boolean).join('\n'):(form.misi||'')
   return (
     <div className="manager">
       <form className="admin-form" onSubmit={saveProfile}>
@@ -378,7 +378,7 @@ function ProfileManager({ profile, pengawas, pengurus, divisi, onSaved, setMessa
           </label>
           <label className="wide">Sejarah<textarea rows="6" value={form.sejarah||''} onChange={e=>setForm({...form,sejarah:e.target.value})}/></label>
           <label className="wide">Visi<textarea rows="4" value={form.visi||''} onChange={e=>setForm({...form,visi:e.target.value})}/></label>
-          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e=>setForm({...form,misi:e.target.value.split('\\n')})}/></label>
+          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e=>setForm({...form,misi:e.target.value.split('\n')})}/></label>
         </div>
         <button className="dashboard-primary" type="submit"><Save size={17}/> Simpan Profil Koperasi</button>
       </form>
@@ -402,9 +402,9 @@ async function uploadPeriodPhoto(e, section, role, setMessage, setUploadingPhoto
   const file=e.target.files?.[0]; if(!file) return
   if(!file.type.startsWith('image/')){setMessage('File harus berupa gambar.');e.target.value='';return}
   if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return}
-  const key=\`${section}-${role}\`; setUploadingPhoto(key); setMessage('Mengunggah foto...')
+  const key=`${section}-${role}`; setUploadingPhoto(key); setMessage('Mengunggah foto...')
   const extension=file.name.split('.').pop()?.toLowerCase()||'jpg'
-  const path=\`profil-koperasi/${section}/${Date.now()}-${crypto.randomUUID()}.${extension}\`
+  const path=`profil-koperasi/${section}/${Date.now()}-${crypto.randomUUID()}.${extension}`
   const {error}=await supabase.storage.from('koperasi-images').upload(path,file,{cacheControl:'3600',upsert:false})
   if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
   const {data}=supabase.storage.from('koperasi-images').getPublicUrl(path)
@@ -461,7 +461,7 @@ function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,se
       return row
     })
     const {error}=await supabase.from(table).upsert(rows)
-    setMessage(error?error.message:\`${title} periode ${editing.periode} berhasil disimpan.\`)
+    setMessage(error?error.message:`${title} periode ${editing.periode} berhasil disimpan.`)
     if(!error){setEditing(null);onSaved()}
   }
 
@@ -478,9 +478,9 @@ function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,se
         <label>Periode<input value={editing.periode} placeholder="Contoh: 2025–2028" onChange={e=>setEditing({...editing,periode:e.target.value})} required/></label>
         <div className="form-grid" style={{marginTop:16}}>
           {roles.map(role=><div key={role.key} className="pengawas-editor-person">
-            <label>{role.label}<input value={editing[role.key]?.nama||''} placeholder={\`Nama ${role.label}\`} onChange={e=>updateRole(role.key,'nama',e.target.value)}/></label>
-            <label>Foto<input type="file" accept="image/*" onChange={e=>uploadPeriodPhoto(e,section,role.key,setMessage,setUploadingPhoto)} disabled={uploadingPhoto===\`${section}-${role.key}\`}/><small>{uploadingPhoto===\`${section}-${role.key}\`?'Sedang mengunggah...':'Maks. 5 MB.'}</small></label>
-            {editing[role.key]?.foto_url&&<img src={editing[role.key].foto_url} alt={\`Foto ${role.label}\`} style={{width:72,height:72,objectFit:'cover',borderRadius:12,marginTop:6}}/>}
+            <label>{role.label}<input value={editing[role.key]?.nama||''} placeholder={`Nama ${role.label}`} onChange={e=>updateRole(role.key,'nama',e.target.value)}/></label>
+            <label>Foto<input type="file" accept="image/*" onChange={e=>uploadPeriodPhoto(e,section,role.key,setMessage,setUploadingPhoto)} disabled={uploadingPhoto===`${section}-${role.key}`}/><small>{uploadingPhoto===`${section}-${role.key}`?'Sedang mengunggah...':'Maks. 5 MB.'}</small></label>
+            {editing[role.key]?.foto_url&&<img src={editing[role.key].foto_url} alt={`Foto ${role.label}`} style={{width:72,height:72,objectFit:'cover',borderRadius:12,marginTop:6}}/>}
           </div>)}
         </div>
         <div className="editor-actions"><button className="dashboard-primary" type="submit"><Save size={17}/> {saveLabel}</button><button type="button" className="dashboard-secondary" onClick={()=>setEditing(null)}>Batal</button></div>
