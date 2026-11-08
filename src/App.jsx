@@ -201,7 +201,7 @@ function PublicSite() {
               <b>KEDUNGNENG</b>
               <small>{data.settings.tagline}</small>
             </div>
-          </a>
+          </button>
 
           <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
             <button type="button" className="active" onClick={() => { scrollToSection("beranda"); setMenuOpen(false) }}>Beranda</button>
