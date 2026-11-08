@@ -82,6 +82,8 @@ img { display: block; max-width: 100%; }
 
 .section { padding: 68px 0; }
 .intro { background: #fff; }
+.profile-photo { margin-bottom: 20px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #e7eee9; box-shadow: 0 8px 24px rgba(25, 54, 39, .06); }
+.profile-photo img { display: block; width: 100%; height: 280px; object-fit: cover; }
 .intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: end; }
 .section-kicker { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .16em; }
 .intro h2 { font-family: 'Plus Jakarta Sans'; font-size: clamp(30px, 4vw, 45px); line-height: 1.12; margin: 10px 0 0; }
