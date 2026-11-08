@@ -136,7 +136,7 @@ function PublicSite() {
 
       const [settings, stats, activities, products, gallery, profile, units, timeline] = results
       setData({
-        settings: settings.data || fallback.settings,
+        settings: { ...(settings.data || fallback.settings), hero_image_url: profile.data?.hero_image_url || settings.data?.hero_image_url || fallback.settings.hero_image_url },
         stats: stats.data?.length ? stats.data : fallback.stats,
         activities: activities.data?.length ? activities.data : fallback.activities,
         products: products.data?.length ? products.data : fallback.products,
