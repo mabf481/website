@@ -65,7 +65,7 @@ export default function Dashboard() {
       products,
       gallery,
     ] = await Promise.all([
-      supabase.from('admin_users').select('id,phone,name,status').eq('id', session.user.id).eq('status', 'active').maybeSingle(),
+      supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).maybeSingle(),
       supabase.from('site_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
       supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
