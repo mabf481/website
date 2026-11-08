@@ -35,6 +35,7 @@ const fallback = {
     hero_subtitle: 'Bersama Petani, Mewujudkan Pertanian yang Produktif dan Berkelanjutan',
     hero_image_url:
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=85',
+    logo_url: '/logo-llp.webp',
   },
   stats: [
     { label: 'Anggota', value: '136', note: '12% dari tahun lalu', icon: 'users' },
@@ -179,7 +180,11 @@ function PublicSite() {
       <nav className="navbar">
         <div className="container nav-inner">
           <a className="brand" href="#beranda" onClick={() => setMenuOpen(false)}>
-            <div className="brand-mark"><Leaf size={31} /></div>
+            <img
+              className="brand-logo"
+              src={data.settings.logo_url || fallback.settings.logo_url}
+              alt="Logo LLP Kedungneng"
+            />
             <div>
               <strong>KOPERASI PERTANIAN</strong>
               <b>LANGGENG LUMBUNG PANGAN</b>
