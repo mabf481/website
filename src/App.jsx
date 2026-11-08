@@ -300,16 +300,16 @@ function PublicSite() {
                   <p className="profile-long-text">{data.profile.sejarah}</p>
                 </article>
               )}
-              {data.profile?.visi && (
-                <article className="profile-card">
-                  <span className="section-kicker">VISI</span>
-                  <p>{data.profile.visi}</p>
-                </article>
-              )}
               {data.profile?.legalitas && (
                 <article className="profile-card">
                   <span className="section-kicker">LEGALITAS</span>
                   <p>{data.profile.legalitas}</p>
+                </article>
+              )}
+              {data.profile?.visi && (
+                <article className="profile-card">
+                  <span className="section-kicker">VISI</span>
+                  <p>{data.profile.visi}</p>
                 </article>
               )}
             </div>
