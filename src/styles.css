@@ -285,3 +285,6 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .timeline-item h3{margin:0 0 .35rem}
 .timeline-item p{margin:0;line-height:1.65}
 @media(max-width:760px){.profile-highlight-grid,.mission-grid{grid-template-columns:1fr}.timeline-item{grid-template-columns:70px 1fr}}
+
+.manager-section{margin-top:2.5rem;padding-top:2rem;border-top:1px solid rgba(31,61,46,.1)}
+.manager-section h2{margin:0 0 .25rem}.manager-section .manager-toolbar{margin-bottom:1rem}
