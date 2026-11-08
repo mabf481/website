@@ -436,16 +436,6 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
         <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Profil Koperasi</button>
       </form>
 
-      <section className="manager-section">
-        <div className="manager-toolbar"><div><h2>Perjalanan Koperasi</h2><p>{timeline.length} tahapan</p></div><button className="dashboard-primary small" onClick={()=>setTimelineDraft({tahun:'',judul:'',deskripsi:'',urutan:timeline.length+1,aktif:true})}><Plus size={16}/> Tambah</button></div>
-        {timelineDraft && <form className="editor-card" onSubmit={saveTimeline}><div className="form-grid">
-          <label>Tahun<input required value={timelineDraft.tahun} onChange={e=>setTimelineDraft({...timelineDraft,tahun:e.target.value})}/></label>
-          <label>Judul<input required value={timelineDraft.judul} onChange={e=>setTimelineDraft({...timelineDraft,judul:e.target.value})}/></label>
-          <label>Urutan<input type="number" value={timelineDraft.urutan} onChange={e=>setTimelineDraft({...timelineDraft,urutan:e.target.value})}/></label>
-          <label className="wide">Deskripsi<textarea rows="3" value={timelineDraft.deskripsi} onChange={e=>setTimelineDraft({...timelineDraft,deskripsi:e.target.value})}/></label>
-        </div><div className="editor-actions"><button className="dashboard-primary" type="submit"><Save size={17}/> Simpan</button><button type="button" className="dashboard-secondary" onClick={()=>setTimelineDraft(null)}>Batal</button></div></form>}
-        <div className="admin-table-wrap"><table className="admin-table"><tbody>{timeline.map(item=><tr key={item.id}><td><strong>{item.tahun} — {item.judul}</strong><small>{item.deskripsi}</small></td><td><div className="table-actions"><button onClick={()=>setTimelineDraft({...item})}>Edit</button><button className="delete" onClick={()=>remove('koperasi_timeline',item.id,'Timeline')}><Trash2 size={15}/></button></div></td></tr>)}</tbody></table></div>
-      </section>
     </div>
   )
 }
