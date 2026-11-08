@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [login, setLogin] = useState({ email: '', password: '' })
   const [message, setMessage] = useState('')
   const [tab, setTab] = useState('overview')
-  const [data, setData] = useState({ settings: null, profile: null, pengawas: [], units: [], timeline: [], stats: [], activities: [], products: [], gallery: [] })
+  const [data, setData] = useState({ settings: null, profile: null, pengawas: [], pengurus: [], divisi: [], units: [], timeline: [], stats: [], activities: [], products: [], gallery: [] })
   const [draft, setDraft] = useState(empty.stats)
   const [editing, setEditing] = useState(null)
 
@@ -59,6 +59,8 @@ export default function Dashboard() {
       settings,
       profile,
       pengawas,
+      pengurus,
+      divisi,
       units,
       timeline,
       stats,
@@ -69,7 +71,9 @@ export default function Dashboard() {
       supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).maybeSingle(),
       supabase.from('site_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
-      supabase.from('koperasi_pengawas_periode').select('*').order('urutan'),
+      supabase.from('koperasi_pengawas_periode').select('*').order('periode').order('urutan'),
+      supabase.from('koperasi_pengurus_periode').select('*').order('periode').order('urutan'),
+      supabase.from('koperasi_divisi_periode').select('*').order('periode').order('urutan'),
       supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
       supabase.from('koperasi_timeline').select('*').order('urutan'),
       supabase.from('site_stats').select('*').order('sort_order'),
@@ -82,6 +86,8 @@ export default function Dashboard() {
       settings: settings.data,
       profile: profile.data,
       pengawas: pengawas.data || [],
+      pengurus: pengurus.data || [],
+      divisi: divisi.data || [],
       units: units.data || [],
       timeline: timeline.data || [],
       stats: stats.data || [],
@@ -172,7 +178,7 @@ export default function Dashboard() {
 
         {tab === 'overview' && <Overview counts={counts} email={session.user.email} />}
         {tab === 'settings' && <SettingsForm data={data.settings} onSaved={load} setMessage={setMessage} />}
-        {tab === 'profile' && <ProfileManager profile={data.profile} pengawas={data.pengawas} onSaved={load} setMessage={setMessage} />}
+        {tab === 'profile' && <ProfileManager profile={data.profile} pengawas={data.pengawas} pengurus={data.pengurus} divisi={data.divisi} onSaved={load} setMessage={setMessage} />}
         {['stats', 'activities', 'products', 'gallery'].includes(tab) && (
           <ContentManager
             type={tab}
@@ -331,298 +337,168 @@ function ContentManager({ type, items, draft, editing, setEditing, setDraft, onS
 }
 
 
-function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
+function ProfileManager({ profile, pengawas, pengurus, divisi, onSaved, setMessage }) {
   const [form, setForm] = useState(profile || {})
-  const [pengawasList, setPengawasList] = useState(pengawas || [])
   const [uploadingPhoto, setUploadingPhoto] = useState(null)
-  const [editingPeriod, setEditingPeriod] = useState(null)
-
   useEffect(() => setForm(profile || {}), [profile])
-  useEffect(() => setPengawasList(pengawas || []), [pengawas])
 
   async function uploadMainPhoto(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      setMessage('File harus berupa gambar.')
-      e.target.value = ''
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage('Ukuran foto maksimal 5 MB.')
-      e.target.value = ''
-      return
-    }
-
-    setUploadingPhoto('main')
-    setMessage('Mengunggah foto...')
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
-
-    const { error } = await supabase.storage
-      .from('koperasi-images')
-      .upload(path, file, { cacheControl: '3600', upsert: false })
-
-    if (error) {
-      setMessage(error.message)
-      setUploadingPhoto(null)
-      e.target.value = ''
-      return
-    }
-
-    const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
-    setForm(current => ({ ...current, foto_profil_url: data.publicUrl }))
+    const file=e.target.files?.[0]; if(!file) return
+    if(!file.type.startsWith('image/')){setMessage('File harus berupa gambar.');e.target.value='';return}
+    if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return}
+    setUploadingPhoto('main'); setMessage('Mengunggah foto...')
+    const extension=file.name.split('.').pop()?.toLowerCase()||'jpg'
+    const path=\`profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}\`
+    const {error}=await supabase.storage.from('koperasi-images').upload(path,file,{cacheControl:'3600',upsert:false})
+    if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
+    const {data}=supabase.storage.from('koperasi-images').getPublicUrl(path)
+    setForm(current=>({...current,foto_profil_url:data.publicUrl}))
     setMessage('Foto berhasil diunggah. Klik Simpan Profil Koperasi untuk menyimpan.')
-    setUploadingPhoto(null)
-    e.target.value = ''
+    setUploadingPhoto(null); e.target.value=''
   }
 
-  async function uploadPersonPhoto(e, role) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      setMessage('File harus berupa gambar.')
-      e.target.value = ''
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage('Ukuran foto maksimal 5 MB.')
-      e.target.value = ''
-      return
-    }
-
-    setUploadingPhoto(role)
-    setMessage('Mengunggah foto...')
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `profil-koperasi/pengawas/${Date.now()}-${crypto.randomUUID()}.${extension}`
-
-    const { error } = await supabase.storage
-      .from('koperasi-images')
-      .upload(path, file, { cacheControl: '3600', upsert: false })
-
-    if (error) {
-      setMessage(error.message)
-      setUploadingPhoto(null)
-      e.target.value = ''
-      return
-    }
-
-    const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
-    setEditingPeriod(current => current ? {
-      ...current,
-      [role]: { ...current[role], foto_url: data.publicUrl },
-    } : current)
-    setMessage('Foto berhasil diunggah. Klik Simpan Pengawas untuk menyimpan.')
-    setUploadingPhoto(null)
-    e.target.value = ''
-  }
-
-  async function saveProfile(e) {
+  async function saveProfile(e){
     e.preventDefault()
-    const payload = {
-      ...form,
-      misi: Array.isArray(form.misi)
-        ? form.misi.map(x => String(x).trim()).filter(Boolean)
-        : String(form.misi || '').split('\n').map(x => x.trim()).filter(Boolean),
-      updated_at: new Date().toISOString(),
-    }
-    const { error } = await supabase.from('koperasi_profil').upsert(payload)
-    setMessage(error ? error.message : 'Profil koperasi berhasil disimpan.')
-    if (!error) onSaved()
+    const payload={...form,misi:Array.isArray(form.misi)?form.misi.map(x=>String(x).trim()).filter(Boolean):String(form.misi||'').split('\\n').map(x=>x.trim()).filter(Boolean),updated_at:new Date().toISOString()}
+    const {error}=await supabase.from('koperasi_profil').upsert(payload)
+    setMessage(error?'error:'+error.message:'Profil koperasi berhasil disimpan.')
+    if(!error) onSaved()
   }
 
-  const roleOrder = ['Ketua', 'Anggota 1', 'Anggota 2']
-
-  const periodGroups = useMemo(() => {
-    const groups = new Map()
-    pengawasList.filter(item => item.periode?.trim()).forEach(item => {
-      const key = item.periode.trim()
-      if (!groups.has(key)) groups.set(key, { periode: key, Ketua: null, 'Anggota 1': null, 'Anggota 2': null })
-      const group = groups.get(key)
-      if (roleOrder.includes(item.jabatan)) group[item.jabatan] = item
-    })
-    return Array.from(groups.values())
-  }, [pengawasList])
-
-  function openAddPeriod() {
-    setEditingPeriod({
-      isNew: true,
-      periode: '',
-      Ketua: { jabatan: 'Ketua', nama: '', foto_url: '', urutan: 1 },
-      'Anggota 1': { jabatan: 'Anggota 1', nama: '', foto_url: '', urutan: 2 },
-      'Anggota 2': { jabatan: 'Anggota 2', nama: '', foto_url: '', urutan: 3 },
-    })
-  }
-
-  function openEditPeriod(group) {
-    setEditingPeriod({
-      isNew: false,
-      periode: group.periode || '',
-      Ketua: group.Ketua ? { ...group.Ketua } : { jabatan: 'Ketua', nama: '', foto_url: '', urutan: 1 },
-      'Anggota 1': group['Anggota 1'] ? { ...group['Anggota 1'] } : { jabatan: 'Anggota 1', nama: '', foto_url: '', urutan: 2 },
-      'Anggota 2': group['Anggota 2'] ? { ...group['Anggota 2'] } : { jabatan: 'Anggota 2', nama: '', foto_url: '', urutan: 3 },
-    })
-  }
-
-  function updateEditingRole(role, key, value) {
-    setEditingPeriod(current => ({
-      ...current,
-      [role]: { ...current[role], [key]: value },
-    }))
-  }
-
-  async function savePengawasPeriod(e) {
-    e.preventDefault()
-    if (!editingPeriod?.periode.trim()) {
-      setMessage('Periode wajib diisi.')
-      return
-    }
-
-    const now = new Date().toISOString()
-    const rows = roleOrder.map((role, index) => ({
-      ...(editingPeriod[role].id ? { id: editingPeriod[role].id } : {}),
-      periode: editingPeriod.periode.trim(),
-      jabatan: role,
-      nama: editingPeriod[role].nama || '',
-      foto_url: editingPeriod[role].foto_url || '',
-      urutan: index + 1,
-      aktif: true,
-      updated_at: now,
-    }))
-
-    const { error } = await supabase.from('koperasi_pengawas_periode').upsert(rows)
-    setMessage(error ? error.message : `Pengawas periode ${editingPeriod.periode} berhasil disimpan.`)
-    if (!error) {
-      setEditingPeriod(null)
-      onSaved()
-    }
-  }
-
-  const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\n') : (form.misi || '')
-
+  const missionText=Array.isArray(form.misi)?form.misi.filter(Boolean).join('\\n'):(form.misi||'')
   return (
     <div className="manager">
       <form className="admin-form" onSubmit={saveProfile}>
         <div className="form-grid">
-          <label>Legalitas<input value={form.legalitas || ''} onChange={e => setForm({ ...form, legalitas: e.target.value })} /></label>
-          <label>
-            Foto utama
-            <input type="file" accept="image/*" onChange={uploadMainPhoto} disabled={uploadingPhoto} />
-            <small>{uploadingPhoto ? 'Sedang mengunggah...' : 'Pilih foto dari komputer (maks. 5 MB).'}</small>
-            {form.foto_profil_url && (
-              <div style={{ marginTop: 10 }}>
-                <img src={form.foto_profil_url} alt="Preview foto profil koperasi" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
-              </div>
-            )}
+          <label>Legalitas<input value={form.legalitas||''} onChange={e=>setForm({...form,legalitas:e.target.value})}/></label>
+          <label>Foto utama
+            <input type="file" accept="image/*" onChange={uploadMainPhoto} disabled={uploadingPhoto}/>
+            <small>{uploadingPhoto?'Sedang mengunggah...':'Pilih foto dari komputer (maks. 5 MB).'}</small>
+            {form.foto_profil_url&&<div style={{marginTop:10}}><img src={form.foto_profil_url} alt="Preview foto profil koperasi" style={{width:'100%',maxHeight:220,objectFit:'cover',borderRadius:12}}/></div>}
           </label>
-          <label className="wide">Sejarah<textarea rows="6" value={form.sejarah || ''} onChange={e => setForm({ ...form, sejarah: e.target.value })} /></label>
-          <label className="wide">Visi<textarea rows="4" value={form.visi || ''} onChange={e => setForm({ ...form, visi: e.target.value })} /></label>
-          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e => setForm({ ...form, misi: e.target.value.split('\n') })} /></label>
+          <label className="wide">Sejarah<textarea rows="6" value={form.sejarah||''} onChange={e=>setForm({...form,sejarah:e.target.value})}/></label>
+          <label className="wide">Visi<textarea rows="4" value={form.visi||''} onChange={e=>setForm({...form,visi:e.target.value})}/></label>
+          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e=>setForm({...form,misi:e.target.value.split('\\n')})}/></label>
         </div>
-        <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Profil Koperasi</button>
+        <button className="dashboard-primary" type="submit"><Save size={17}/> Simpan Profil Koperasi</button>
       </form>
 
-      <div className="profile-block" style={{ marginTop: 28 }}>
-        <div className="section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-          <div>
-            <h2><Users size={22} /> Pengawas Periode</h2>
-            <p style={{ margin: '6px 0 0', color: '#66736b' }}>Kelola Ketua dan 2 Anggota berdasarkan periode kepengurusan.</p>
-          </div>
-          <button className="dashboard-primary small" type="button" onClick={openAddPeriod}><Plus size={16} /> Tambah</button>
+      <PeriodSection title="Pengawas Periode" description="Kelola Ketua Pengawas dan 2 Anggota Pengawas berdasarkan periode." table="koperasi_pengawas_periode" items={pengawas}
+        roles={[{key:'Ketua Pengawas',label:'Ketua Pengawas',urutan:1},{key:'Anggota 1',label:'Anggota Pengawas',urutan:2},{key:'Anggota 2',label:'Anggota Pengawas',urutan:3}]}
+        saveLabel="Simpan Pengawas" onSaved={onSaved} setMessage={setMessage} uploadingPhoto={uploadingPhoto} setUploadingPhoto={setUploadingPhoto}/>
+
+      <PeriodSection title="Pengurus Periode" description="Kelola Ketua, Sekertaris, dan Bendahara berdasarkan periode." table="koperasi_pengurus_periode" items={pengurus}
+        roles={[{key:'Ketua',label:'Ketua',urutan:1},{key:'Sekretaris',label:'Sekertaris',urutan:2},{key:'Bendahara',label:'Bendahara',urutan:3}]}
+        saveLabel="Simpan Pengurus" onSaved={onSaved} setMessage={setMessage} uploadingPhoto={uploadingPhoto} setUploadingPhoto={setUploadingPhoto}/>
+
+      <PeriodSection title="Divisi" description="Kelola penanggung jawab divisi berdasarkan periode." table="koperasi_divisi_periode" items={divisi}
+        roles={[{key:'Keanggotaan',label:'Keanggotaan',urutan:1},{key:'Bisnis',label:'Bisnis',urutan:2},{key:'Pendidikan dan Pelatihan',label:'Pendidikan dan Pelatihan',urutan:3}]}
+        saveLabel="Simpan Divisi" onSaved={onSaved} setMessage={setMessage} uploadingPhoto={uploadingPhoto} setUploadingPhoto={setUploadingPhoto}/>
+    </div>
+  )
+}
+
+async function uploadPeriodPhoto(e, section, role, setMessage, setUploadingPhoto) {
+  const file=e.target.files?.[0]; if(!file) return
+  if(!file.type.startsWith('image/')){setMessage('File harus berupa gambar.');e.target.value='';return}
+  if(file.size>5*1024*1024){setMessage('Ukuran foto maksimal 5 MB.');e.target.value='';return}
+  const key=\`${section}-${role}\`; setUploadingPhoto(key); setMessage('Mengunggah foto...')
+  const extension=file.name.split('.').pop()?.toLowerCase()||'jpg'
+  const path=\`profil-koperasi/${section}/${Date.now()}-${crypto.randomUUID()}.${extension}\`
+  const {error}=await supabase.storage.from('koperasi-images').upload(path,file,{cacheControl:'3600',upsert:false})
+  if(error){setMessage(error.message);setUploadingPhoto(null);e.target.value='';return}
+  const {data}=supabase.storage.from('koperasi-images').getPublicUrl(path)
+  e.target.dataset.uploadedUrl=data.publicUrl
+  e.target.dispatchEvent(new CustomEvent('period-photo-uploaded',{detail:{role,url:data.publicUrl}}))
+  setMessage('Foto berhasil diunggah.')
+  setUploadingPhoto(null); e.target.value=''
+}
+
+function PeriodSection({title,description,table,items,roles,saveLabel,onSaved,setMessage,uploadingPhoto,setUploadingPhoto}) {
+  const [editing,setEditing]=useState(null)
+  const section=table.includes('pengawas')?'pengawas':table.includes('pengurus')?'pengurus':'divisi'
+
+  const groups=useMemo(()=>{
+    const map=new Map()
+    items.filter(item=>item.periode?.trim()).forEach(item=>{
+      const key=item.periode.trim()
+      if(!map.has(key)){const g={periode:key};roles.forEach(role=>{g[role.key]=null});map.set(key,g)}
+      const g=map.get(key)
+      let roleKey=item.divisi||item.jabatan
+      if(section==='pengawas' && roleKey==='Ketua') roleKey='Ketua Pengawas'
+      if(roles.some(role=>role.key===roleKey)) g[roleKey]=item
+    })
+    return Array.from(map.values())
+  },[items,roles,section])
+
+  function newPeriod(){
+    const next={isNew:true,periode:''}
+    roles.forEach(role=>{next[role.key]={nama:'',foto_url:'',urutan:role.urutan}})
+    setEditing(next)
+  }
+  function editPeriod(group){
+    const next={isNew:false,periode:group.periode}
+    roles.forEach(role=>{next[role.key]=group[role.key]?{...group[role.key]}:{nama:'',foto_url:'',urutan:role.urutan}})
+    setEditing(next)
+  }
+  function updateRole(role,key,value){setEditing(current=>({...current,[role]:{...current[role],[key]:value}}))}
+
+  useEffect(()=>{
+    const handler=e=>updateRole(e.detail.role,'foto_url',e.detail.url)
+    window.addEventListener('period-photo-uploaded',handler)
+    return()=>window.removeEventListener('period-photo-uploaded',handler)
+  })
+
+  async function save(e){
+    e.preventDefault()
+    if(!editing?.periode.trim()){setMessage('Periode wajib diisi.');return}
+    const rows=roles.map(role=>{
+      const item=editing[role.key]||{}
+      const row={...(item.id?{id:item.id}:{}),periode:editing.periode.trim(),nama:item.nama||'',foto_url:item.foto_url||'',urutan:role.urutan,aktif:true,updated_at:new Date().toISOString()}
+      if(section==='divisi') row.divisi=role.key
+      else if(section==='pengawas') row.jabatan=role.key==='Ketua Pengawas'?'Ketua':role.key
+      else row.jabatan=role.key
+      return row
+    })
+    const {error}=await supabase.from(table).upsert(rows)
+    setMessage(error?error.message:\`${title} periode ${editing.periode} berhasil disimpan.\`)
+    if(!error){setEditing(null);onSaved()}
+  }
+
+  const headers=['Periode',...roles.flatMap(role=>[role.label,'Foto']),'Aksi']
+  return (
+    <div className="profile-block" style={{marginTop:28}}>
+      <div className="section-heading" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16}}>
+        <div><h2><Users size={22}/> {title}</h2><p style={{margin:'6px 0 0',color:'#66736b'}}>{description}</p></div>
+        <button className="dashboard-primary small" type="button" onClick={newPeriod}><Plus size={16}/> Tambah</button>
+      </div>
+
+      {editing&&<form className="editor-card" onSubmit={save} style={{marginTop:18}}>
+        <h2>{editing.isNew?'Tambah':'Edit'} {title}</h2>
+        <label>Periode<input value={editing.periode} placeholder="Contoh: 2025–2028" onChange={e=>setEditing({...editing,periode:e.target.value})} required/></label>
+        <div className="form-grid" style={{marginTop:16}}>
+          {roles.map(role=><div key={role.key} className="pengawas-editor-person">
+            <label>{role.label}<input value={editing[role.key]?.nama||''} placeholder={\`Nama ${role.label}\`} onChange={e=>updateRole(role.key,'nama',e.target.value)}/></label>
+            <label>Foto<input type="file" accept="image/*" onChange={e=>uploadPeriodPhoto(e,section,role.key,setMessage,setUploadingPhoto)} disabled={uploadingPhoto===\`${section}-${role.key}\`}/><small>{uploadingPhoto===\`${section}-${role.key}\`?'Sedang mengunggah...':'Maks. 5 MB.'}</small></label>
+            {editing[role.key]?.foto_url&&<img src={editing[role.key].foto_url} alt={\`Foto ${role.label}\`} style={{width:72,height:72,objectFit:'cover',borderRadius:12,marginTop:6}}/>}
+          </div>)}
         </div>
+        <div className="editor-actions"><button className="dashboard-primary" type="submit"><Save size={17}/> {saveLabel}</button><button type="button" className="dashboard-secondary" onClick={()=>setEditing(null)}>Batal</button></div>
+      </form>}
 
-        {editingPeriod && (
-          <form className="editor-card" onSubmit={savePengawasPeriod} style={{ marginTop: 18 }}>
-            <h2>{editingPeriod.isNew ? 'Tambah' : 'Edit'} Pengawas Periode</h2>
-            <label>
-              Periode
-              <input
-                value={editingPeriod.periode}
-                placeholder="Contoh: 2026–2029"
-                onChange={e => setEditingPeriod({ ...editingPeriod, periode: e.target.value })}
-                required
-              />
-            </label>
-
-            <div className="form-grid" style={{ marginTop: 16 }}>
-              {roleOrder.map(role => (
-                <div key={role} className="pengawas-editor-person">
-                  <label>
-                    {role}
-                    <input
-                      value={editingPeriod[role].nama || ''}
-                      placeholder={`Nama ${role}`}
-                      onChange={e => updateEditingRole(role, 'nama', e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Foto
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={e => uploadPersonPhoto(e, role)}
-                      disabled={uploadingPhoto === role}
-                    />
-                    <small>{uploadingPhoto === role ? 'Sedang mengunggah...' : 'Maks. 5 MB.'}</small>
-                  </label>
-                  {editingPeriod[role].foto_url && (
-                    <img
-                      src={editingPeriod[role].foto_url}
-                      alt={`Foto ${role}`}
-                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 12, marginTop: 6 }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="editor-actions">
-              <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Pengawas</button>
-              <button type="button" className="dashboard-secondary" onClick={() => setEditingPeriod(null)}>Batal</button>
-            </div>
-          </form>
-        )}
-
-        <div className="admin-table-wrap" style={{ marginTop: 18 }}>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Periode</th>
-                <th>Ketua</th>
-                <th>Foto</th>
-                <th>Anggota</th>
-                <th>Foto</th>
-                <th>Anggota</th>
-                <th>Foto</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {periodGroups.map((group, index) => (
-                <tr key={group.periode || `empty-${index}`}>
-                  <td><strong>{group.periode}</strong></td>
-                  <td>{group.Ketua?.nama || '—'}</td>
-                  <td>{group.Ketua?.foto_url ? <img src={group.Ketua.foto_url} alt="Foto Ketua" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
-                  <td>{group['Anggota 1']?.nama || '—'}</td>
-                  <td>{group['Anggota 1']?.foto_url ? <img src={group['Anggota 1'].foto_url} alt="Foto Anggota" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
-                  <td>{group['Anggota 2']?.nama || '—'}</td>
-                  <td>{group['Anggota 2']?.foto_url ? <img src={group['Anggota 2'].foto_url} alt="Foto Anggota" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} /> : '—'}</td>
-                  <td>
-                    <div className="table-actions">
-                      <button type="button" onClick={() => openEditPeriod(group)}>Edit</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="admin-table-wrap" style={{marginTop:18}}>
+        <table className="admin-table"><thead><tr>{headers.map(header=><th key={header}>{header}</th>)}</tr></thead>
+          <tbody>{groups.map(group=><tr key={group.periode}>
+            <td><strong>{group.periode}</strong></td>
+            {roles.map(role=><FragmentCell key={role.key} item={group[role.key]}/>)}
+            <td><div className="table-actions"><button type="button" onClick={()=>editPeriod(group)}>Edit</button></div></td>
+          </tr>)}</tbody>
+        </table>
       </div>
     </div>
   )
 }
 
+function FragmentCell({item}) {
+  return <><td>{item?.nama||'—'}</td><td>{item?.foto_url?<img src={item.foto_url} alt="Foto" style={{width:52,height:52,objectFit:'cover',borderRadius:10}}/>:'—'}</td></>
+}
