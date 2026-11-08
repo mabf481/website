@@ -321,8 +321,15 @@ function PublicSite() {
                 </article>
               )}
               {data.profile?.visi && (
-                <article className="profile-card">
-                  <span className="section-kicker">VISI</span>
+                <article className="profile-card profile-card-visi">
+                  <div className="visi-heading">
+                    <div className="visi-mark">03</div>
+                    <div>
+                      <span className="section-kicker">VISI</span>
+                      <h3>Arah dan Tujuan Koperasi</h3>
+                    </div>
+                  </div>
+                  <div className="visi-divider" />
                   <p>{data.profile.visi}</p>
                 </article>
               )}
