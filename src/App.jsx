@@ -308,8 +308,15 @@ function PublicSite() {
                 </article>
               )}
               {data.profile?.legalitas && (
-                <article className="profile-card">
-                  <span className="section-kicker">LEGALITAS</span>
+                <article className="profile-card profile-card-legalitas">
+                  <div className="legalitas-heading">
+                    <div className="legalitas-mark">02</div>
+                    <div>
+                      <span className="section-kicker">LEGALITAS</span>
+                      <h3>Legalitas Koperasi</h3>
+                    </div>
+                  </div>
+                  <div className="legalitas-divider" />
                   <p>{data.profile.legalitas}</p>
                 </article>
               )}
