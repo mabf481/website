@@ -332,7 +332,47 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
   const [form, setForm] = useState(profile || {})
   const [unitDraft, setUnitDraft] = useState(null)
   const [timelineDraft, setTimelineDraft] = useState(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   useEffect(() => setForm(profile || {}), [profile])
+
+  async function uploadMainPhoto(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('File harus berupa gambar.')
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('Ukuran foto maksimal 5 MB.')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingPhoto(true)
+    setMessage('Mengunggah foto...')
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `profil-koperasi/\${Date.now()}-\${crypto.randomUUID()}.\${extension}`
+
+    const { error } = await supabase.storage
+      .from('koperasi-images')
+      .upload(path, file, { cacheControl: '3600', upsert: false })
+
+    if (error) {
+      setMessage(error.message)
+      setUploadingPhoto(false)
+      e.target.value = ''
+      return
+    }
+
+    const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
+    setForm(current => ({ ...current, hero_image_url: data.publicUrl }))
+    setMessage('Foto berhasil diunggah. Klik Simpan Profil Koperasi untuk menyimpan.')
+    setUploadingPhoto(false)
+    e.target.value = ''
+  }
 
   async function saveProfile(e) {
     e.preventDefault()
@@ -385,10 +425,19 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
             ['telepon', 'Telepon'],
             ['whatsapp', 'WhatsApp'],
             ['email', 'Email'],
-            ['hero_image_url', 'URL foto utama'],
           ].map(([key, label]) => (
             <label key={key}>{label}<input value={form[key] || ''} onChange={e => setForm({ ...form, [key]: e.target.value })} /></label>
           ))}
+          <label>
+            Foto utama
+            <input type="file" accept="image/*" onChange={uploadMainPhoto} disabled={uploadingPhoto} />
+            <small>{uploadingPhoto ? 'Sedang mengunggah...' : 'Pilih foto dari komputer (maks. 5 MB).'}</small>
+            {form.hero_image_url && (
+              <div style={{ marginTop: 10 }}>
+                <img src={form.hero_image_url} alt="Preview foto utama" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
+              </div>
+            )}
+          </label>}
           <label className="wide">Deskripsi<textarea rows="4" value={form.deskripsi || ''} onChange={e => setForm({ ...form, deskripsi: e.target.value })} /></label>
           <label className="wide">Sejarah<textarea rows="6" value={form.sejarah || ''} onChange={e => setForm({ ...form, sejarah: e.target.value })} /></label>
           <label className="wide">Visi<textarea rows="4" value={form.visi || ''} onChange={e => setForm({ ...form, visi: e.target.value })} /></label>
