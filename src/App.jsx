@@ -211,7 +211,7 @@ function PublicSite() {
             <button className="icon-button" onClick={() => setSearchOpen(!searchOpen)} aria-label="Cari">
               <Search size={21} />
             </button>
-            <a className="login-button" href="#dashboard"><Users size={18} /> Login Dashboard</a>
+            <a className="login-button" href="/dashboard"><Users size={18} /> Login Dashboard</a>
             <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
               {menuOpen ? <X /> : <Menu />}
             </button>
@@ -410,13 +410,13 @@ function SectionHeading({ icon, title, href }) {
 
 
 export default function App() {
-  const [hash, setHash] = useState(window.location.hash || '#beranda')
+  const [hash, setHash] = useState(window.location.hash || '')
 
   useEffect(() => {
-    const onHash = () => setHash(window.location.hash || '#beranda')
+    const onHash = () => setHash(window.location.hash || '')
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  return hash === '#dashboard' ? <Dashboard /> : <PublicSite />
+  return (window.location.pathname === '/dashboard' || hash === '#dashboard') ? <Dashboard /> : <PublicSite />
 }
