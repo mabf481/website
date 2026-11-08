@@ -18,6 +18,7 @@ import { supabase } from './lib/supabase'
 const tabs = [
   ['overview', 'Ringkasan', BarChart3],
   ['settings', 'Profil Website', Settings],
+  ['profile', 'Profil Koperasi', Leaf],
   ['stats', 'Statistik', Users],
   ['activities', 'Kegiatan', CalendarDays],
   ['products', 'Produk', Package],
@@ -37,7 +38,7 @@ export default function Dashboard() {
   const [login, setLogin] = useState({ email: '', password: '' })
   const [message, setMessage] = useState('')
   const [tab, setTab] = useState('overview')
-  const [data, setData] = useState({ settings: null, stats: [], activities: [], products: [], gallery: [] })
+  const [data, setData] = useState({ settings: null, profile: null, units: [], timeline: [], stats: [], activities: [], products: [], gallery: [] })
   const [draft, setDraft] = useState(empty.stats)
   const [editing, setEditing] = useState(null)
 
@@ -54,8 +55,11 @@ export default function Dashboard() {
 
   async function load() {
     const [{ data: me }, settings, stats, activities, products, gallery] = await Promise.all([
-      supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).maybeSingle(),
+      supabase.from('koperasi_admin').select('id,email,nama,role,active').eq('id', session.user.id).maybeSingle(),
       supabase.from('site_settings').select('*').eq('id', 1).maybeSingle(),
+      supabase.from('koperasi_profil').select('*').limit(1).maybeSingle(),
+      supabase.from('koperasi_unit_usaha').select('*').order('urutan'),
+      supabase.from('koperasi_timeline').select('*').order('urutan'),
       supabase.from('site_stats').select('*').order('sort_order'),
       supabase.from('activities').select('*').order('sort_order'),
       supabase.from('products').select('*').order('sort_order'),
@@ -64,6 +68,9 @@ export default function Dashboard() {
     setAdmin(Boolean(me))
     setData({
       settings: settings.data,
+      profile: profile.data,
+      units: units.data || [],
+      timeline: timeline.data || [],
       stats: stats.data || [],
       activities: activities.data || [],
       products: products.data || [],
@@ -120,6 +127,8 @@ export default function Dashboard() {
     activities: data.activities.length,
     products: data.products.length,
     gallery: data.gallery.length,
+    units: data.units.length,
+    timeline: data.timeline.length,
   }
 
   return (
@@ -149,6 +158,7 @@ export default function Dashboard() {
 
         {tab === 'overview' && <Overview counts={counts} email={session.user.email} />}
         {tab === 'settings' && <SettingsForm data={data.settings} onSaved={load} setMessage={setMessage} />}
+        {tab === 'profile' && <ProfileManager profile={data.profile} units={data.units} timeline={data.timeline} onSaved={load} setMessage={setMessage} />}
         {['stats', 'activities', 'products', 'gallery'].includes(tab) && (
           <ContentManager
             type={tab}
@@ -302,6 +312,99 @@ function ContentManager({ type, items, draft, editing, setEditing, setDraft, onS
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+
+function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
+  const [form, setForm] = useState(profile || {})
+  const [unitDraft, setUnitDraft] = useState(null)
+  const [timelineDraft, setTimelineDraft] = useState(null)
+  useEffect(() => setForm(profile || {}), [profile])
+
+  async function saveProfile(e) {
+    e.preventDefault()
+    const payload = {
+      ...form,
+      misi: Array.isArray(form.misi) ? form.misi : String(form.misi || '').split('\n').map(x => x.trim()).filter(Boolean),
+      updated_at: new Date().toISOString(),
+    }
+    const { error } = await supabase.from('koperasi_profil').upsert(payload)
+    setMessage(error ? error.message : 'Profil koperasi berhasil disimpan.')
+    if (!error) onSaved()
+  }
+
+  async function saveUnit(e) {
+    e.preventDefault()
+    const payload = { ...unitDraft, urutan: Number(unitDraft.urutan || 0), aktif: unitDraft.aktif !== false }
+    const { error } = await supabase.from('koperasi_unit_usaha').upsert(payload)
+    setMessage(error ? error.message : 'Unit usaha berhasil disimpan.')
+    if (!error) { setUnitDraft(null); onSaved() }
+  }
+
+  async function saveTimeline(e) {
+    e.preventDefault()
+    const payload = { ...timelineDraft, urutan: Number(timelineDraft.urutan || 0), aktif: timelineDraft.aktif !== false }
+    const { error } = await supabase.from('koperasi_timeline').upsert(payload)
+    setMessage(error ? error.message : 'Timeline berhasil disimpan.')
+    if (!error) { setTimelineDraft(null); onSaved() }
+  }
+
+  async function remove(table, id, label) {
+    if (!confirm('Hapus ' + label + ' ini?')) return
+    const { error } = await supabase.from(table).delete().eq('id', id)
+    setMessage(error ? error.message : label + ' berhasil dihapus.')
+    if (!error) onSaved()
+  }
+
+  const missionText = Array.isArray(form.misi) ? form.misi.join('\n') : (form.misi || '')
+
+  return (
+    <div className="manager">
+      <form className="admin-form" onSubmit={saveProfile}>
+        <div className="form-grid">
+          {[
+            ['nama', 'Nama koperasi'],
+            ['slogan', 'Slogan'],
+            ['alamat', 'Alamat'],
+            ['legalitas', 'Legalitas'],
+            ['telepon', 'Telepon'],
+            ['whatsapp', 'WhatsApp'],
+            ['email', 'Email'],
+            ['hero_image_url', 'URL foto utama'],
+          ].map(([key, label]) => (
+            <label key={key}>{label}<input value={form[key] || ''} onChange={e => setForm({ ...form, [key]: e.target.value })} /></label>
+          ))}
+          <label className="wide">Deskripsi<textarea rows="4" value={form.deskripsi || ''} onChange={e => setForm({ ...form, deskripsi: e.target.value })} /></label>
+          <label className="wide">Sejarah<textarea rows="6" value={form.sejarah || ''} onChange={e => setForm({ ...form, sejarah: e.target.value })} /></label>
+          <label className="wide">Visi<textarea rows="4" value={form.visi || ''} onChange={e => setForm({ ...form, visi: e.target.value })} /></label>
+          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e => setForm({ ...form, misi: e.target.value.split('\n') })} /></label>
+        </div>
+        <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Profil Koperasi</button>
+      </form>
+
+      <section className="manager-section">
+        <div className="manager-toolbar"><div><h2>Unit Usaha</h2><p>{units.length} unit usaha</p></div><button className="dashboard-primary small" onClick={() => setUnitDraft({ nama:'', deskripsi:'', icon:'🌾', urutan:units.length+1, aktif:true })}><Plus size={16}/> Tambah</button></div>
+        {unitDraft && <form className="editor-card" onSubmit={saveUnit}><div className="form-grid">
+          <label>Nama<input required value={unitDraft.nama} onChange={e=>setUnitDraft({...unitDraft,nama:e.target.value})}/></label>
+          <label>Ikon<input value={unitDraft.icon} onChange={e=>setUnitDraft({...unitDraft,icon:e.target.value})}/></label>
+          <label>Urutan<input type="number" value={unitDraft.urutan} onChange={e=>setUnitDraft({...unitDraft,urutan:e.target.value})}/></label>
+          <label className="wide">Deskripsi<textarea rows="3" value={unitDraft.deskripsi} onChange={e=>setUnitDraft({...unitDraft,deskripsi:e.target.value})}/></label>
+        </div><div className="editor-actions"><button className="dashboard-primary" type="submit"><Save size={17}/> Simpan</button><button type="button" className="dashboard-secondary" onClick={()=>setUnitDraft(null)}>Batal</button></div></form>}
+        <div className="admin-table-wrap"><table className="admin-table"><tbody>{units.map(item=><tr key={item.id}><td><strong>{item.icon} {item.nama}</strong><small>{item.deskripsi}</small></td><td><div className="table-actions"><button onClick={()=>setUnitDraft({...item})}>Edit</button><button className="delete" onClick={()=>remove('koperasi_unit_usaha',item.id,'Unit usaha')}><Trash2 size={15}/></button></div></td></tr>)}</tbody></table></div>
+      </section>
+
+      <section className="manager-section">
+        <div className="manager-toolbar"><div><h2>Perjalanan Koperasi</h2><p>{timeline.length} tahapan</p></div><button className="dashboard-primary small" onClick={()=>setTimelineDraft({tahun:'',judul:'',deskripsi:'',urutan:timeline.length+1,aktif:true})}><Plus size={16}/> Tambah</button></div>
+        {timelineDraft && <form className="editor-card" onSubmit={saveTimeline}><div className="form-grid">
+          <label>Tahun<input required value={timelineDraft.tahun} onChange={e=>setTimelineDraft({...timelineDraft,tahun:e.target.value})}/></label>
+          <label>Judul<input required value={timelineDraft.judul} onChange={e=>setTimelineDraft({...timelineDraft,judul:e.target.value})}/></label>
+          <label>Urutan<input type="number" value={timelineDraft.urutan} onChange={e=>setTimelineDraft({...timelineDraft,urutan:e.target.value})}/></label>
+          <label className="wide">Deskripsi<textarea rows="3" value={timelineDraft.deskripsi} onChange={e=>setTimelineDraft({...timelineDraft,deskripsi:e.target.value})}/></label>
+        </div><div className="editor-actions"><button className="dashboard-primary" type="submit"><Save size={17}/> Simpan</button><button type="button" className="dashboard-secondary" onClick={()=>setTimelineDraft(null)}>Batal</button></div></form>}
+        <div className="admin-table-wrap"><table className="admin-table"><tbody>{timeline.map(item=><tr key={item.id}><td><strong>{item.tahun} — {item.judul}</strong><small>{item.deskripsi}</small></td><td><div className="table-actions"><button onClick={()=>setTimelineDraft({...item})}>Edit</button><button className="delete" onClick={()=>remove('koperasi_timeline',item.id,'Timeline')}><Trash2 size={15}/></button></div></td></tr>)}</tbody></table></div>
+      </section>
     </div>
   )
 }
