@@ -417,24 +417,14 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
     <div className="manager">
       <form className="admin-form" onSubmit={saveProfile}>
         <div className="form-grid">
-          {[
-            ['nama', 'Nama koperasi'],
-            ['slogan', 'Slogan'],
-            ['alamat', 'Alamat'],
-            ['legalitas', 'Legalitas'],
-            ['telepon', 'Telepon'],
-            ['whatsapp', 'WhatsApp'],
-            ['email', 'Email'],
-          ].map(([key, label]) => (
-            <label key={key}>{label}<input value={form[key] || ''} onChange={e => setForm({ ...form, [key]: e.target.value })} /></label>
-          ))}
+          <label>Legalitas<input value={form.legalitas || ''} onChange={e => setForm({ ...form, legalitas: e.target.value })} /></label>
           <label>
             Foto utama
             <input type="file" accept="image/*" onChange={uploadMainPhoto} disabled={uploadingPhoto} />
             <small>{uploadingPhoto ? 'Sedang mengunggah...' : 'Pilih foto dari komputer (maks. 5 MB).'}</small>
             {form.foto_profil_url && (
               <div style={{ marginTop: 10 }}>
-                <img src={form.hero_image_url} alt="Preview foto profil koperasi" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
+                <img src={form.foto_profil_url} alt="Preview foto profil koperasi" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />
               </div>
             )}
           </label>
@@ -445,17 +435,6 @@ function ProfileManager({ profile, units, timeline, onSaved, setMessage }) {
         </div>
         <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Profil Koperasi</button>
       </form>
-
-      <section className="manager-section">
-        <div className="manager-toolbar"><div><h2>Unit Usaha</h2><p>{units.length} unit usaha</p></div><button className="dashboard-primary small" onClick={() => setUnitDraft({ nama:'', deskripsi:'', icon:'🌾', urutan:units.length+1, aktif:true })}><Plus size={16}/> Tambah</button></div>
-        {unitDraft && <form className="editor-card" onSubmit={saveUnit}><div className="form-grid">
-          <label>Nama<input required value={unitDraft.nama} onChange={e=>setUnitDraft({...unitDraft,nama:e.target.value})}/></label>
-          <label>Ikon<input value={unitDraft.icon} onChange={e=>setUnitDraft({...unitDraft,icon:e.target.value})}/></label>
-          <label>Urutan<input type="number" value={unitDraft.urutan} onChange={e=>setUnitDraft({...unitDraft,urutan:e.target.value})}/></label>
-          <label className="wide">Deskripsi<textarea rows="3" value={unitDraft.deskripsi} onChange={e=>setUnitDraft({...unitDraft,deskripsi:e.target.value})}/></label>
-        </div><div className="editor-actions"><button className="dashboard-primary" type="submit"><Save size={17}/> Simpan</button><button type="button" className="dashboard-secondary" onClick={()=>setUnitDraft(null)}>Batal</button></div></form>}
-        <div className="admin-table-wrap"><table className="admin-table"><tbody>{units.map(item=><tr key={item.id}><td><strong>{item.icon} {item.nama}</strong><small>{item.deskripsi}</small></td><td><div className="table-actions"><button onClick={()=>setUnitDraft({...item})}>Edit</button><button className="delete" onClick={()=>remove('koperasi_unit_usaha',item.id,'Unit usaha')}><Trash2 size={15}/></button></div></td></tr>)}</tbody></table></div>
-      </section>
 
       <section className="manager-section">
         <div className="manager-toolbar"><div><h2>Perjalanan Koperasi</h2><p>{timeline.length} tahapan</p></div><button className="dashboard-primary small" onClick={()=>setTimelineDraft({tahun:'',judul:'',deskripsi:'',urutan:timeline.length+1,aktif:true})}><Plus size={16}/> Tambah</button></div>
