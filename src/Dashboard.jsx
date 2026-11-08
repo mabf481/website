@@ -338,6 +338,45 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
   useEffect(() => setForm(profile || {}), [profile])
   useEffect(() => setPengawasList(pengawas || []), [pengawas])
 
+  async function uploadMainPhoto(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('File harus berupa gambar.')
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('Ukuran foto maksimal 5 MB.')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingPhoto('main')
+    setMessage('Mengunggah foto...')
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
+
+    const { error } = await supabase.storage
+      .from('koperasi-images')
+      .upload(path, file, { cacheControl: '3600', upsert: false })
+
+    if (error) {
+      setMessage(error.message)
+      setUploadingPhoto(null)
+      e.target.value = ''
+      return
+    }
+
+    const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
+    setForm(current => ({ ...current, foto_profil_url: data.publicUrl }))
+    setMessage('Foto berhasil diunggah. Klik Simpan Profil Koperasi untuk menyimpan.')
+    setUploadingPhoto(null)
+    e.target.value = ''
+  }
+
   async function uploadPersonPhoto(e, id) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -357,7 +396,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     setUploadingPhoto(id)
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = \`profil-koperasi/pengawas/\${id}-\${Date.now()}-\${crypto.randomUUID()}.\${extension}\`
+    const path = `profil-koperasi/pengawas/${id}-${Date.now()}-${crypto.randomUUID()}.${extension}`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
@@ -383,7 +422,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       ...form,
       misi: Array.isArray(form.misi)
         ? form.misi.map(x => String(x).trim()).filter(Boolean)
-        : String(form.misi || '').split('\\n').map(x => x.trim()).filter(Boolean),
+        : String(form.misi || '').split('\n').map(x => x.trim()).filter(Boolean),
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('koperasi_profil').upsert(payload)
@@ -403,7 +442,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('koperasi_pengawas_periode').upsert(payload)
-    setMessage(error ? error.message : \`\${item.jabatan} berhasil disimpan.\`)
+    setMessage(error ? error.message : `${item.jabatan} berhasil disimpan.`)
     if (!error) onSaved()
   }
 
@@ -411,7 +450,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     setPengawasList(current => current.map(item => item.id === id ? { ...item, [key]: value } : item))
   }
 
-  const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\\n') : (form.misi || '')
+  const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\n') : (form.misi || '')
 
   return (
     <div className="manager">
@@ -430,7 +469,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
           </label>
           <label className="wide">Sejarah<textarea rows="6" value={form.sejarah || ''} onChange={e => setForm({ ...form, sejarah: e.target.value })} /></label>
           <label className="wide">Visi<textarea rows="4" value={form.visi || ''} onChange={e => setForm({ ...form, visi: e.target.value })} /></label>
-          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e => setForm({ ...form, misi: e.target.value.split('\\n') })} /></label>
+          <label className="wide">Misi — satu misi per baris<textarea rows="8" value={missionText} onChange={e => setForm({ ...form, misi: e.target.value.split('\n') })} /></label>
         </div>
         <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Profil Koperasi</button>
       </form>
@@ -458,13 +497,13 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
                   </label>
                   <label className="wide">
                     Nama
-                    <input value={item.nama || ''} placeholder={\`Nama \${item.jabatan}\`} onChange={e => updatePengawas(item.id, 'nama', e.target.value)} />
+                    <input value={item.nama || ''} placeholder={`Nama ${item.jabatan}`} onChange={e => updatePengawas(item.id, 'nama', e.target.value)} />
                   </label>
                 </div>
                 <div>
                   <label>Foto</label>
                   {item.foto_url ? (
-                    <img src={item.foto_url} alt={\`Foto \${item.jabatan}\`} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 14, marginBottom: 10 }} />
+                    <img src={item.foto_url} alt={`Foto ${item.jabatan}`} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 14, marginBottom: 10 }} />
                   ) : (
                     <div style={{ height: 180, borderRadius: 14, background: '#eef3ef', display: 'grid', placeItems: 'center', color: '#718078', marginBottom: 10 }}>
                       Belum ada foto
