@@ -335,6 +335,8 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
   const [form, setForm] = useState(profile || {})
   const [pengawasList, setPengawasList] = useState(pengawas || [])
   const [uploadingPhoto, setUploadingPhoto] = useState(null)
+  const [editingPeriod, setEditingPeriod] = useState(null)
+
   useEffect(() => setForm(profile || {}), [profile])
   useEffect(() => setPengawasList(pengawas || []), [pengawas])
 
@@ -357,7 +359,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     setUploadingPhoto('main')
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `profil-koperasi/${Date.now()}-${crypto.randomUUID()}.${extension}`
+    const path = \`profil-koperasi/\${Date.now()}-\${crypto.randomUUID()}.\${extension}\`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
@@ -377,7 +379,7 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     e.target.value = ''
   }
 
-  async function uploadPersonPhoto(e, id) {
+  async function uploadPersonPhoto(e, role) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -393,10 +395,10 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       return
     }
 
-    setUploadingPhoto(id)
+    setUploadingPhoto(role)
     setMessage('Mengunggah foto...')
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `profil-koperasi/pengawas/${id}-${Date.now()}-${crypto.randomUUID()}.${extension}`
+    const path = \`profil-koperasi/pengawas/\${Date.now()}-\${crypto.randomUUID()}.\${extension}\`
 
     const { error } = await supabase.storage
       .from('koperasi-images')
@@ -410,7 +412,10 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     }
 
     const { data } = supabase.storage.from('koperasi-images').getPublicUrl(path)
-    setPengawasList(current => current.map(item => item.id === id ? { ...item, foto_url: data.publicUrl } : item))
+    setEditingPeriod(current => current ? {
+      ...current,
+      [role]: { ...current[role], foto_url: data.publicUrl },
+    } : current)
     setMessage('Foto berhasil diunggah. Klik Simpan Pengawas untuk menyimpan.')
     setUploadingPhoto(null)
     e.target.value = ''
@@ -430,24 +435,71 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
     if (!error) onSaved()
   }
 
-  async function savePengawas(item) {
-    const payload = {
-      id: item.id,
-      periode: item.periode || '',
-      jabatan: item.jabatan,
-      nama: item.nama || '',
-      foto_url: item.foto_url || '',
-      urutan: Number(item.urutan || 0),
-      aktif: item.aktif !== false,
-      updated_at: new Date().toISOString(),
-    }
-    const { error } = await supabase.from('koperasi_pengawas_periode').upsert(payload)
-    setMessage(error ? error.message : `${item.jabatan} berhasil disimpan.`)
-    if (!error) onSaved()
+  const roleOrder = ['Ketua', 'Sekretaris', 'Bendahara']
+
+  const periodGroups = useMemo(() => {
+    const groups = new Map()
+    pengawasList.forEach(item => {
+      const key = item.periode || 'Belum diisi'
+      if (!groups.has(key)) groups.set(key, { periode: item.periode || '', Ketua: null, Sekretaris: null, Bendahara: null })
+      const group = groups.get(key)
+      if (roleOrder.includes(item.jabatan)) group[item.jabatan] = item
+    })
+    return Array.from(groups.values())
+  }, [pengawasList])
+
+  function openAddPeriod() {
+    setEditingPeriod({
+      isNew: true,
+      periode: '',
+      Ketua: { jabatan: 'Ketua', nama: '', foto_url: '', urutan: 1 },
+      Sekretaris: { jabatan: 'Sekretaris', nama: '', foto_url: '', urutan: 2 },
+      Bendahara: { jabatan: 'Bendahara', nama: '', foto_url: '', urutan: 3 },
+    })
   }
 
-  function updatePengawas(id, key, value) {
-    setPengawasList(current => current.map(item => item.id === id ? { ...item, [key]: value } : item))
+  function openEditPeriod(group) {
+    setEditingPeriod({
+      isNew: false,
+      periode: group.periode || '',
+      Ketua: group.Ketua ? { ...group.Ketua } : { jabatan: 'Ketua', nama: '', foto_url: '', urutan: 1 },
+      Sekretaris: group.Sekretaris ? { ...group.Sekretaris } : { jabatan: 'Sekretaris', nama: '', foto_url: '', urutan: 2 },
+      Bendahara: group.Bendahara ? { ...group.Bendahara } : { jabatan: 'Bendahara', nama: '', foto_url: '', urutan: 3 },
+    })
+  }
+
+  function updateEditingRole(role, key, value) {
+    setEditingPeriod(current => ({
+      ...current,
+      [role]: { ...current[role], [key]: value },
+    }))
+  }
+
+  async function savePengawasPeriod(e) {
+    e.preventDefault()
+    if (!editingPeriod?.periode.trim()) {
+      setMessage('Periode wajib diisi.')
+      return
+    }
+
+    const now = new Date().toISOString()
+    const rows = roleOrder.map((role, index) => ({
+      ...(editingPeriod[role].id ? { id: editingPeriod[role].id } : {}),
+      periode: editingPeriod.periode.trim(),
+      jabatan: role,
+      nama: editingPeriod[role].nama || '',
+      foto_url: editingPeriod[role].foto_url || '',
+      urutan: index + 1,
+      aktif: true,
+      updated_at: now,
+    }))
+
+    const { error } = await supabase.from('koperasi_pengawas_periode').upsert(rows)
+    setMessage(error ? error.message : \`Pengawas periode \${editingPeriod.periode} berhasil disimpan.\`)
+    if (!error) {
+      setEditingPeriod(null)
+      onSaved()
+    }
   }
 
   const missionText = Array.isArray(form.misi) ? form.misi.filter(Boolean).join('\n') : (form.misi || '')
@@ -475,53 +527,98 @@ function ProfileManager({ profile, pengawas, onSaved, setMessage }) {
       </form>
 
       <div className="profile-block" style={{ marginTop: 28 }}>
-        <div className="section-heading">
-          <h2><Users size={22} /> Pengawas Periode</h2>
+        <div className="section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+          <div>
+            <h2><Users size={22} /> Pengawas Periode</h2>
+            <p style={{ margin: '6px 0 0', color: '#66736b' }}>Kelola Ketua, Sekretaris, dan Bendahara berdasarkan periode kepengurusan.</p>
+          </div>
+          <button className="dashboard-primary small" type="button" onClick={openAddPeriod}><Plus size={16} /> Tambah</button>
         </div>
-        <p style={{ margin: '0 0 18px', color: '#66736b' }}>
-          Isi periode kepengurusan, nama, dan foto untuk Ketua, Sekretaris, dan Bendahara.
-        </p>
 
-        <div style={{ display: 'grid', gap: 18 }}>
-          {pengawasList.map((item) => (
-            <article key={item.id} className="profile-card" style={{ padding: 22 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 190px', gap: 22, alignItems: 'start' }}>
-                <div className="form-grid">
-                  <label>
-                    Jabatan
-                    <input value={item.jabatan || ''} disabled />
-                  </label>
-                  <label>
-                    Periode
-                    <input value={item.periode || ''} placeholder="Contoh: 2026–2029" onChange={e => updatePengawas(item.id, 'periode', e.target.value)} />
-                  </label>
-                  <label className="wide">
-                    Nama
-                    <input value={item.nama || ''} placeholder={`Nama ${item.jabatan}`} onChange={e => updatePengawas(item.id, 'nama', e.target.value)} />
-                  </label>
-                </div>
-                <div>
-                  <label>Foto</label>
-                  {item.foto_url ? (
-                    <img src={item.foto_url} alt={`Foto ${item.jabatan}`} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 14, marginBottom: 10 }} />
-                  ) : (
-                    <div style={{ height: 180, borderRadius: 14, background: '#eef3ef', display: 'grid', placeItems: 'center', color: '#718078', marginBottom: 10 }}>
-                      Belum ada foto
+        {editingPeriod && (
+          <form className="editor-card" onSubmit={savePengawasPeriod} style={{ marginTop: 18 }}>
+            <h2>{editingPeriod.isNew ? 'Tambah' : 'Edit'} Pengawas Periode</h2>
+            <label>
+              Periode
+              <input
+                value={editingPeriod.periode}
+                placeholder="Contoh: 2026–2029"
+                onChange={e => setEditingPeriod({ ...editingPeriod, periode: e.target.value })}
+                required
+              />
+            </label>
+
+            <div className="form-grid" style={{ marginTop: 16 }}>
+              {roleOrder.map(role => (
+                <label key={role} className="wide">
+                  {role}
+                  <input
+                    value={editingPeriod[role].nama || ''}
+                    placeholder={\`Nama \${role}\`}
+                    onChange={e => updateEditingRole(role, 'nama', e.target.value)}
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="editor-actions">
+              <button className="dashboard-primary" type="submit"><Save size={17} /> Simpan Pengawas</button>
+              <button type="button" className="dashboard-secondary" onClick={() => setEditingPeriod(null)}>Batal</button>
+            </div>
+          </form>
+        )}
+
+        <div className="admin-table-wrap" style={{ marginTop: 18 }}>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Periode</th>
+                <th>Ketua</th>
+                <th>Foto</th>
+                <th>Sekretaris</th>
+                <th>Foto</th>
+                <th>Bendahara</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {periodGroups.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: 24 }}>Belum ada data pengawas periode.</td>
+                </tr>
+              ) : periodGroups.map((group, index) => (
+                <tr key={group.periode || \`empty-\${index}\`}>
+                  <td><strong>{group.periode || 'Belum diisi'}</strong></td>
+                  <td>{group.Ketua?.nama || '—'}</td>
+                  <td>
+                    {group.Ketua?.foto_url
+                      ? <img src={group.Ketua.foto_url} alt="Foto Ketua" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} />
+                      : '—'}
+                  </td>
+                  <td>{group.Sekretaris?.nama || '—'}</td>
+                  <td>
+                    {group.Sekretaris?.foto_url
+                      ? <img src={group.Sekretaris.foto_url} alt="Foto Sekretaris" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10 }} />
+                      : '—'}
+                  </td>
+                  <td>
+                    <div>{group.Bendahara?.nama || '—'}</div>
+                    {group.Bendahara?.foto_url && (
+                      <img src={group.Bendahara.foto_url} alt="Foto Bendahara" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, marginTop: 6 }} />
+                    )}
+                  </td>
+                  <td>
+                    <div className="table-actions">
+                      <button type="button" onClick={() => openEditPeriod(group)}>Edit</button>
                     </div>
-                  )}
-                  <input type="file" accept="image/*" onChange={e => uploadPersonPhoto(e, item.id)} disabled={uploadingPhoto === item.id} />
-                  <small>{uploadingPhoto === item.id ? 'Sedang mengunggah...' : 'Maks. 5 MB.'}</small>
-                </div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
-                <button className="dashboard-primary small" type="button" onClick={() => savePengawas(item)}>
-                  <Save size={16} /> Simpan {item.jabatan}
-                </button>
-              </div>
-            </article>
-          ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   )
 }
+
